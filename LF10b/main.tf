@@ -1,10 +1,23 @@
-
-# Definiere den CloudStack-Provider
-provider "cloudstack" {
-  api_url    = "https://cloudstack.example.com/client/api"
-  api_key    = "YOUR_API_KEY"
-  secret_key = "YOUR_SECRET_KEY"
+terraform {
+ required_providers {
+    cloudstack = {
+      source  = "cloudstack/cloudstack"
+      version = "0.4.0"
+    }
+  }
 }
+
+provider "cloudstack" {
+  api_url    = "https://deine-cloudstack-url.de/client/api"
+  api_key    = "dein-api-key"
+  secret_key = "dein-secret-key"
+}
+
+resource "cloudstack_project" "example_project" {
+  name         = "Terraform-Projekt"
+  display_text = "Projekt für Terraform Deployment"
+}
+
 
 # Netzwerk definieren: VLAN mit dem IP-Bereich 192.168.1.0/24
 resource "cloudstack_network" "vlan_network" {
