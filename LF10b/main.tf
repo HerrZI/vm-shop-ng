@@ -13,11 +13,6 @@ provider "cloudstack" {
   secret_key = "dein-secret-key"
 }
 
-resource "cloudstack_project" "example_project" {
-  name         = "Terraform-Projekt"
-  display_text = "Projekt für Terraform Deployment"
-}
-
 
 # Netzwerk definieren: VLAN mit dem IP-Bereich 192.168.1.0/24
 resource "cloudstack_network" "vlan_network" {
