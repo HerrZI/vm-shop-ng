@@ -1,5 +1,6 @@
 LF10b/.terraform.lock.hcl
 LF10b/.terraform/*.*
+LF10b/terraform.tfvars
 Tuttas/.terraform.lock.hcl
 Tuttas/.terraform/*.*
 Tuttas/terraform.tfvars
