@@ -19,22 +19,24 @@ provider "cloudstack" {
 
 resource "cloudstack_template" "template1" {
   name          = "TuttasTemplate"
-  os_type      = "Other Linux (64-bit)"
+  os_type      = "Ubuntu 18.04 LTS"
   zone            = "a4848bf1-b2d1-4b39-97e3-72106df81f09"
-  url           = "http://dl.openvm.eu/cloudstack/macchinina/x86_64/macchinina-kvm.qcow2.bz2"
+  url           = "http://dl.openvm.eu/cloudstack/ubuntu/x86_64/ubuntu-18.04-kvm.qcow2.bz2"
   format        = "QCOW2"
   hypervisor    = "KVM"
   password_enabled = true
+  
+  
 }
 
 # Netzwerk definieren
 resource "cloudstack_network" "vlan_network" {
   name             = "VLAN-Network"
   display_text     = "VLAN Network for Linux VMs"
-  network_offering = "12d4fc87-3718-40b0-9707-2b53b8555cda"  # Beispiel-Network Offering
+  network_offering = "a1d37c0a-c84b-44b3-99d2-92c872b9e11a"  # Beispiel-Network Offering
   zone             = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID
   cidr             = "10.1.36.0/24"
-  #vlan             = "500"  # Beispiel: VLAN-ID 300
+  vlan             = "250"  # Beispiel: VLAN-ID 300
 }
 
 # Virtuelle Maschine 1 erstellen
@@ -42,33 +44,45 @@ resource "cloudstack_instance" "vm1" {
   name              = "linux-vm1"
   display_name      = "Linux VM 1"
   service_offering  = "Big Instance" # Ersetze mit dem passenden Service Offering
-  template         = cloudstack_template.template1.id
-  #template = "5bfa057a-91dd-11ef-bd59-46e70d67c9bd"
+  template          = cloudstack_template.template1.id
   zone              = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID
-  network_id        = cloudstack_network.vlan_network.id  # Automatisch das ID des Netzwerks verwenden
+  network_id        = cloudstack_network.vlan_network.id
   root_disk_size    = 20 # Größe der Root-Disk in GB
-    # SSH-Key-Paar angeben
   keypair           = "tuttas"
-  expunge = true
+  expunge           = true
   ip_address        = "10.1.36.100"
 
+  # Cloud-init: Benutzername und Passwort
+  user_data = base64encode(<<EOT
+#cloud-config
+password: geheim
+chpasswd: { expire: False }
+ssh_pwauth: True
+EOT
+  )
 }
 
 # Virtuelle Maschine 2 erstellen
 resource "cloudstack_instance" "vm2" {
   name              = "linux-vm2"
   display_name      = "Linux VM 2"
-  service_offering  = "Big Instance" # Ersetze mit dem passenden Service Offering
-  template         = cloudstack_template.template1.id
-  #template = "5bfa057a-91dd-11ef-bd59-46e70d67c9bd"
-
-  zone              = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID
-  network_id        = cloudstack_network.vlan_network.id  # Automatisch das ID des Netzwerks verwenden
-  root_disk_size    = 20 # Größe der Root-Disk in GB
-    # SSH-Key-Paar angeben
+  service_offering  = "Big Instance"
+  template          = cloudstack_template.template1.id
+  zone              = "a4848bf1-b2d1-4b39-97e3-72106df81f09"
+  network_id        = cloudstack_network.vlan_network.id
+  root_disk_size    = 20
   keypair           = "tuttas"
-  expunge = true
+  expunge           = true
   ip_address        = "10.1.36.101"
+
+  # Cloud-init: Benutzername und Passwort
+  user_data = base64encode(<<EOT
+#cloud-config
+password: geheim
+chpasswd: { expire: False }
+ssh_pwauth: True
+EOT
+  )
 }
 
 # Ausgaben definieren
