@@ -84,6 +84,20 @@ ssh_pwauth: True
 EOT
   )
 }
+# Virtuelle Maschine 3 erstellen
+resource "cloudstack_instance" "vm3" {
+  name              = "windows-vm3"
+  display_name      = "Windows VM 3"
+  service_offering  = "Big Instance"
+  template          =  "93f122f9-645a-4702-8092-1583c7cea70c"
+  zone              = "a4848bf1-b2d1-4b39-97e3-72106df81f09"
+  network_id        = cloudstack_network.vlan_network.id
+  root_disk_size    = 20
+  keypair           = "tuttas"
+  expunge           = true
+  ip_address        = "10.1.36.102"
+
+}
 
 # Ausgaben definieren
 output "vm1_id" {
@@ -92,6 +106,10 @@ output "vm1_id" {
 
 output "vm2_id" {
   value = cloudstack_instance.vm2.id
+}
+
+output "vm3_id" {
+  value = cloudstack_instance.vm3.id
 }
 
 output "network_id" {
