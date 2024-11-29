@@ -506,3 +506,80 @@ function Remove-CloudStackUser {
     }
 }
 
+<#
+.SYNOPSIS
+    Überprüft, ob ein CloudStack-Projekt existiert.
+.DESCRIPTION
+    Diese Funktion überprüft, ob ein Projekt in CloudStack existiert.
+.PARAMETER ProjectId
+    Die ID des Projekts.
+.PARAMETER ProjectName
+    Der Name des Projekts.
+.EXAMPLE
+    Test-CloudStackProject -ProjectId "1234"
+.EXAMPLE
+    Test-CloudStackProject -ProjectName "Projekt1"
+#>
+function Test-CloudStackProject {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$ProjectId, # Optional: ID des Projekts
+
+        [Parameter(Mandatory = $false)]
+        [string]$ProjectName  # Optional: Name des Projekts
+    )
+
+    begin {
+        # Globale Variablen prüfen
+        if (-not $Global:CloudStackBaseUrl -or -not $Global:CloudStackApiKey -or -not $Global:CloudStackSecretKey) {
+            throw "Bitte zuerst Connect-CloudStack ausführen, um eine Verbindung zu CloudStack herzustellen."
+        }
+
+        # Sicherstellen, dass mindestens ein Parameter angegeben ist
+        if (-not $ProjectId -and -not $ProjectName) {
+            throw "Entweder 'ProjectId' oder 'ProjectName' muss angegeben werden."
+        }
+    }
+
+    process {
+        try {
+            # API-Parameter für die Projektsuche
+            $Parameters = @{ "command" = "listProjects" }
+            if ($ProjectId) {
+                $Parameters["id"] = $ProjectId
+            }
+            if ($ProjectName) {
+                $Parameters["name"] = $ProjectName
+            }
+
+            # Signierte URL erstellen
+            $SignedUrl = Get-SignedUrl -Parameters $Parameters
+
+            # Anfrage an die API senden
+            $Response = Invoke-RestMethod -Uri $SignedUrl -Method Get
+
+            # Überprüfung der Antwort
+            if ($Response.listprojectsresponse.project -and $Response.listprojectsresponse.project.Count -gt 0) {
+                Write-Host "Projekt gefunden:" -ForegroundColor Green
+                $Response.listprojectsresponse.project | ForEach-Object {
+                    [PSCustomObject]@{
+                        ID          = $_.id
+                        Name        = $_.name
+                        DisplayText = $_.displaytext
+                        State       = $_.state
+                    }
+                }
+                return $true
+            }
+            else {
+                Write-Host "Projekt nicht gefunden." -ForegroundColor Yellow
+                return $false
+            }
+        }
+        catch {
+            Write-Error "Fehler beim Überprüfen des Projekts: $_"
+            return $false
+        }
+    }
+}
