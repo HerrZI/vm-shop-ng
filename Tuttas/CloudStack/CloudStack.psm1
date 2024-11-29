@@ -1,8 +1,5 @@
 ﻿# Import private Funktionen
-. $PSScriptRoot\Private\Helper.ps1
-
-# Export Cmdlets
-Export-ModuleMember -Function Connect-CloudStack, Add-CloudStackUser, Remove-CloudStackUser, List-CloudStackProjects, New-CloudStackProject, Remove-CloudStackProject
+. $PSScriptRoot\private\Helper.ps1
 
 function Connect-CloudStack {
     [CmdletBinding()]
@@ -334,3 +331,5 @@ function Remove-CloudStackUser {
     }
 }
 
+# Export Cmdlets
+Export-ModuleMember -Function Connect-CloudStack, Add-CloudStackUser, Remove-CloudStackUser, List-CloudStackProjects, New-CloudStackProject, Remove-CloudStackProject
