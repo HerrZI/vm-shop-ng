@@ -99,7 +99,20 @@ function Wait-CloudStackJob {
     }
 }
 
-
+<#
+.SYNOPSIS
+    Verbindet das Skript mit einer CloudStack-Instanz.
+.DESCRIPTION
+    Diese Funktion stellt eine Verbindung zu einer CloudStack-Instanz her und speichert die Anmeldedaten als globale Variablen.
+.PARAMETER BaseUrl
+    Die Basis-URL der CloudStack API.
+.PARAMETER ApiKey
+    Der API-Schlüssel für die Authentifizierung.
+.PARAMETER SecretKey
+    Der geheime Schlüssel für die Authentifizierung.
+.EXAMPLE
+    Connect-CloudStack -BaseUrl "https://cloudstack.mm-bbs.de/client/api" -ApiKey "APIKEY" -SecretKey "SecretKey"
+#>
 function Connect-CloudStack {
     [CmdletBinding()]
     param (
@@ -142,6 +155,20 @@ function Connect-CloudStack {
     }
 }
 
+<#
+.SYNOPSIS
+    Erstellt ein neues CloudStack-Projekt.
+.DESCRIPTION
+    Diese Funktion erstellt ein neues Projekt in CloudStack.
+.PARAMETER Name
+    Der Name des Projekts.
+.PARAMETER DisplayText
+    Die optionale Beschreibung des Projekts.
+.PARAMETER Account
+    Der Account, dem das Projekt zugewiesen werden soll.
+.EXAMPLE
+    New-CloudStackProject -Name "Projekt1" 
+#>
 function New-CloudStackProject {
     [CmdletBinding()]
     param (
@@ -206,6 +233,20 @@ function New-CloudStackProject {
     }
 }
 
+<#
+.SYNOPSIS
+    Listet alle CloudStack-Projekte auf.
+
+.DESCRIPTION
+    Diese Funktion listet alle Projekte in CloudStack auf.
+.PARAMETER DomainId
+    Die ID der Domain, nach der gefiltert werden soll.
+.PARAMETER Account
+    Der Account, nach dem gefiltert werden soll.
+.EXAMPLE
+    List-CloudStackProjects
+
+#>
 function List-CloudStackProjects {
     [CmdletBinding()]
     param (
@@ -263,6 +304,17 @@ function List-CloudStackProjects {
     }
 }
 
+<#
+.SYNOPSIS
+    Löscht ein CloudStack-Projekt.  
+.DESCRIPTION
+    Diese Funktion löscht ein Projekt in CloudStack.
+.PARAMETER ProjectId
+    Die ID des zu löschenden Projekts.
+.EXAMPLE
+    Remove-CloudStackProject -ProjectId "1234"
+
+#>
 function Remove-CloudStackProject {
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
     param (
@@ -317,6 +369,18 @@ function Remove-CloudStackProject {
     }
 }
 
+<#
+.SYNOPSIS
+    Fügt einen Benutzer zu einem CloudStack-Projekt hinzu.
+.DESCRIPTION
+    Diese Funktion fügt einen Benutzer zu einem Projekt in CloudStack hinzu.
+.PARAMETER ProjectId
+    Die ID des Projekts, dem der Benutzer hinzugefügt werden soll.
+.PARAMETER Username
+    Der Benutzername des hinzuzufügenden Benutzers.
+.EXAMPLE
+    Add-CloudStackUser -ProjectId "1234" -Username "user1"
+#>
 function Add-CloudStackUser {
     [CmdletBinding()]
     param (
@@ -372,6 +436,18 @@ function Add-CloudStackUser {
     }
 }
 
+<#
+.SYNOPSIS
+    Entfernt einen Benutzer aus einem CloudStack-Projekt.   
+.DESCRIPTION
+    Diese Funktion entfernt einen Benutzer aus einem Projekt in CloudStack.
+.PARAMETER ProjectId
+    Die ID des Projekts, aus dem der Benutzer entfernt werden soll.
+.PARAMETER Username
+    Der Benutzername des zu entfernenden Benutzers.
+.EXAMPLE
+    Remove-CloudStackUser -ProjectId "1234" -Username "user1"
+#>
 function Remove-CloudStackUser {
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
     param (
