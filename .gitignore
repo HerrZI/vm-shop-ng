@@ -5,3 +5,5 @@ Tuttas/.terraform.lock.hcl
 Tuttas/.terraform/*.*
 Tuttas/terraform.tfvars
 
+Tuttas/terraform.tfstate
+Tuttas/terraform.tfstate.backup
