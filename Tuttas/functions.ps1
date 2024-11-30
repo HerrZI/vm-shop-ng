@@ -244,10 +244,10 @@ function New-CloudStackProject {
 .PARAMETER Account
     Der Account, nach dem gefiltert werden soll.
 .EXAMPLE
-    List-CloudStackProjects
+    Get-CloudStackProjects
 
 #>
-function List-CloudStackProjects {
+function Get-CloudStackProjects {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $false)]
@@ -379,9 +379,9 @@ function Remove-CloudStackProject {
 .PARAMETER Username
     Der Benutzername des hinzuzufügenden Benutzers.
 .EXAMPLE
-    Add-CloudStackUser -ProjectId "1234" -Username "user1"
+    Add-CloudStackProjectMember -ProjectId "1234" -Username "user1"
 #>
-function Add-CloudStackUser {
+function Add-CloudStackProjectMember {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
@@ -446,9 +446,9 @@ function Add-CloudStackUser {
 .PARAMETER Username
     Der Benutzername des zu entfernenden Benutzers.
 .EXAMPLE
-    Remove-CloudStackUser -ProjectId "1234" -Username "user1"
+    Remove-CloudStackProjectMember -ProjectId "1234" -Username "user1"
 #>
-function Remove-CloudStackUser {
+function Remove-CloudStackProjectMember {
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
     param (
         [Parameter(Mandatory = $true)]
@@ -583,3 +583,64 @@ function Test-CloudStackProject {
         }
     }
 }
+
+<#
+.SYNOPSIS
+    Gibt die Benutzer eines CloudStack-Projekts zurück. 
+.DESCRIPTION
+    Diese Funktion gibt die Benutzer eines Projekts in CloudStack zurück.
+.PARAMETER ProjectId
+    Die ID des Projekts, dessen Benutzer abgefragt werden sollen.
+.EXAMPLE
+    Get-CloudStackProjectMember -ProjectId "1234"
+
+#>
+function Get-CloudStackProjectMember {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectId   # ID des Projekts, dessen Benutzer abgefragt werden sollen
+    )
+
+    begin {
+        # Globale Variablen prüfen
+        if (-not $Global:CloudStackBaseUrl -or -not $Global:CloudStackApiKey -or -not $Global:CloudStackSecretKey) {
+            throw "Bitte zuerst Connect-CloudStack ausführen, um eine Verbindung zu CloudStack herzustellen."
+        }
+    }
+
+    process {
+        try {
+            # API-Parameter für die Abfrage der Benutzer eines Projekts
+            $Parameters = @{
+                "command"   = "listProjectAccounts"
+                "projectid" = $ProjectId
+            }
+
+            # Signierte URL erstellen
+            $SignedUrl = Get-SignedUrl -Parameters $Parameters
+
+            # Anfrage an die API senden
+            $Response = Invoke-RestMethod -Uri $SignedUrl -Method Get
+
+            # Überprüfung der Antwort
+            if ($Response.listprojectaccountsresponse.projectaccount -and $Response.listprojectaccountsresponse.projectaccount.Count -gt 0) {
+                Write-Host "Benutzer im Projekt '$ProjectId':" -ForegroundColor Green
+                $Response.listprojectaccountsresponse.projectaccount | ForEach-Object {
+                    [PSCustomObject]@{
+                        Username = $_.account
+                        Role     = $_.role
+                        State    = $_.state
+                    }
+                }
+            }
+            else {
+                Write-Warning "Keine Benutzer im Projekt '$ProjectId' gefunden."
+            }
+        }
+        catch {
+            Write-Error "Fehler beim Abrufen der Benutzer für Projekt '$ProjectId': $_"
+        }
+    }
+}
+
