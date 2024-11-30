@@ -141,6 +141,7 @@ function New-CloudStackProject {
     }
 }
 
+
 <#
 .SYNOPSIS
     Listet alle CloudStack-Projekte auf.
@@ -151,8 +152,12 @@ function New-CloudStackProject {
     Die ID der Domain, nach der gefiltert werden soll.
 .PARAMETER Account
     Der Account, nach dem gefiltert werden soll.
+.PARAMETER Name
+    Der Name des Projekts, nach dem gefiltert werden soll.
 .EXAMPLE
     Get-CloudStackProjects
+.EXAMPLE
+    Get-CloudStackProjects -Name "Projekt1"
 
 #>
 function Get-CloudStackProjects {
@@ -162,7 +167,10 @@ function Get-CloudStackProjects {
         [string]$DomainId, # Optional: Filter nach Domain-ID
 
         [Parameter(Mandatory = $false)]
-        [string]$Account     # Optional: Filter nach Account
+        [string]$Account, # Optional: Filter nach Account
+
+        [Parameter(Mandatory = $false)]
+        [string]$Name        # Optional: Filter nach Projektname
     )
 
     begin {
@@ -182,6 +190,9 @@ function Get-CloudStackProjects {
             if ($Account) {
                 $Parameters["account"] = $Account
             }
+            if ($Name) {
+                $Parameters["name"] = $Name
+            }
 
             # Signierte URL erstellen
             $SignedUrl = Get-SignedUrl -Parameters $Parameters
@@ -192,7 +203,7 @@ function Get-CloudStackProjects {
             # Überprüfung der Antwort
             if ($Response.listprojectsresponse.project) {
                 $Projects = $Response.listprojectsresponse.project
-                # Ausgabe aller Projekte als PowerShell-Objekte
+                Write-Host "Projekte gefunden:" -ForegroundColor Green
                 $Projects | ForEach-Object {
                     [PSCustomObject]@{
                         ID          = $_.id
