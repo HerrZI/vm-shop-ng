@@ -33,7 +33,7 @@ resource "cloudstack_template" "template1" {
 resource "cloudstack_network" "vlan_network" {
   name             = "VLAN-Network"
   display_text     = "VLAN Network for Linux VMs"
-  network_offering = "a1d37c0a-c84b-44b3-99d2-92c872b9e11a"  # Beispiel-Network Offering
+  network_offering = "12d4fc87-3718-40b0-9707-2b53b8555cda"  # Beispiel-Network Offering
   zone             = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID
   cidr             = "10.1.36.0/24"
   vlan             = "250"  # Beispiel: VLAN-ID 300
@@ -89,7 +89,7 @@ resource "cloudstack_instance" "vm3" {
   name              = "windows-vm3"
   display_name      = "Windows VM 3"
   service_offering  = "Big Instance"
-  template          =  "93f122f9-645a-4702-8092-1583c7cea70c"
+  template          =  "a06887cf-ebbd-44e5-8fd9-88795df535ab"
   zone              = "a4848bf1-b2d1-4b39-97e3-72106df81f09"
   network_id        = cloudstack_network.vlan_network.id
   root_disk_size    = 20
