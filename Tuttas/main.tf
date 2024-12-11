@@ -35,7 +35,7 @@ resource "cloudstack_network" "vlan_network" {
   display_text     = "VLAN Network for Linux VMs"
   network_offering = "12d4fc87-3718-40b0-9707-2b53b8555cda"  # Beispiel-Network Offering
   zone             = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID
-  cidr             = "10.1.36.0/24"
+  cidr             = "10.1.1.0/24"
   vlan             = "250"  # Beispiel: VLAN-ID 300
 }
 
@@ -43,26 +43,53 @@ resource "cloudstack_network" "vlan_network" {
 resource "cloudstack_instance" "vm1" {
   name              = "linux-vm1"
   display_name      = "Linux VM 1"
-  service_offering  = "Big Instance" # Ersetze mit dem passenden Service Offering
+  service_offering  = "Big Instance"
   template          = cloudstack_template.template1.id
-  zone              = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID
+  zone              = "a4848bf1-b2d1-4b39-97e3-72106df81f09"
   network_id        = cloudstack_network.vlan_network.id
-  root_disk_size    = 20 # Größe der Root-Disk in GB
+  root_disk_size    = 20
   keypair           = "tuttas"
   expunge           = true
-  ip_address        = "10.1.36.100"
+  ip_address        = "10.1.1.100"
 
-  # Cloud-init: Benutzername und Passwort
+  # Cloud-Init für Passwort, Gateway und DNS
   user_data = base64encode(<<EOT
 #cloud-config
+datasource:
+  None
+
 password: geheim
-chpasswd: { expire: False }
+chpasswd:
+  list: |
+    ubuntu:geheim
+  expire: False
 ssh_pwauth: True
+
+write_files:
+  - path: /etc/netplan/01-netcfg.yaml
+    permissions: '0644'
+    content: |
+      network:
+        version: 2
+        renderer: networkd
+        ethernets:
+          eth0:
+            addresses:
+              - 10.1.1.100/24
+            gateway4: 10.1.1.1
+            nameservers:
+              addresses:
+                - 8.8.8.8
+                - 8.8.4.4
+
+runcmd:
+  - netplan generate
+  - netplan apply
 EOT
   )
 }
 
-# Virtuelle Maschine 2 erstellen
+
 resource "cloudstack_instance" "vm2" {
   name              = "linux-vm2"
   display_name      = "Linux VM 2"
@@ -73,17 +100,45 @@ resource "cloudstack_instance" "vm2" {
   root_disk_size    = 20
   keypair           = "tuttas"
   expunge           = true
-  ip_address        = "10.1.36.101"
+  ip_address        = "10.1.1.101"
 
-  # Cloud-init: Benutzername und Passwort
+  # Cloud-init: Benutzername, Passwort, Netzwerk und DNS
   user_data = base64encode(<<EOT
 #cloud-config
+datasource:
+  None
+
 password: geheim
-chpasswd: { expire: False }
+chpasswd:
+  list: |
+    ubuntu:geheim
+  expire: False
 ssh_pwauth: True
+
+write_files:
+  - path: /etc/netplan/01-netcfg.yaml
+    permissions: '0644'
+    content: |
+      network:
+        version: 2
+        renderer: networkd
+        ethernets:
+          eth0:
+            addresses:
+              - 10.1.1.101/24
+            gateway4: 10.1.1.1
+            nameservers:
+              addresses:
+                - 8.8.8.8
+                - 8.8.4.4
+
+runcmd:
+  - netplan generate
+  - netplan apply
 EOT
   )
 }
+
 # Virtuelle Maschine 3 erstellen
 resource "cloudstack_instance" "vm3" {
   name              = "windows-vm3"
@@ -95,7 +150,7 @@ resource "cloudstack_instance" "vm3" {
   root_disk_size    = 20
   keypair           = "tuttas"
   expunge           = true
-  ip_address        = "10.1.36.102"
+  ip_address        = "10.1.1.102"
 
 }
 
