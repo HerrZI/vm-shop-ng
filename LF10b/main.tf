@@ -51,6 +51,7 @@ resource "cloudstack_instance" "PC" {
   network_id      = cloudstack_network.FISI24X_Team1_Network.id
   zone            = "Multi Media Berufsbildende Schulen"
   project         = "46a73fd5-a767-4244-a2bd-6253e655609d"
+  expunge           = true
 #  project         = "FISI24X_Team1"
 }
 
@@ -62,6 +63,7 @@ resource "cloudstack_instance" "DC" {
   network_id      = cloudstack_network.FISI24X_Team1_Network.id
   zone            = "Multi Media Berufsbildende Schulen"
   project         = "46a73fd5-a767-4244-a2bd-6253e655609d"
+  expunge           = true
 #  project         = "FISI24X_Team1"
 }
 
