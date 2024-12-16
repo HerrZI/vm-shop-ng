@@ -6,7 +6,7 @@ terraform {
   required_providers {
     cloudstack = {
       source  = "cloudstack/cloudstack"
-      version = "0.4.0"
+      version = "0.5.0"
     }
   }
 }
@@ -39,6 +39,17 @@ resource "cloudstack_network" "vlan_network" {
   vlan             = "250"  # Beispiel: VLAN-ID 300
 }
 
+
+resource "cloudstack_egress_firewall" "default" {
+  network_id = cloudstack_network.vlan_network.id
+
+  rule {
+    cidr_list = ["10.1.1.0/24"]
+    protocol  = "all"
+    #ports     = ["80", "1000-2000"]
+  }
+}
+
 # Virtuelle Maschine 1 erstellen
 resource "cloudstack_instance" "vm1" {
   name              = "linux-vm1"
@@ -66,25 +77,30 @@ chpasswd:
 ssh_pwauth: True
 
 write_files:
-  - path: /etc/netplan/01-netcfg.yaml
+  - path: /etc/netplan/50-cloud-init.yaml
     permissions: '0644'
     content: |
       network:
         version: 2
-        renderer: networkd
         ethernets:
           eth0:
             addresses:
               - 10.1.1.100/24
-            gateway4: 10.1.1.1
             nameservers:
               addresses:
                 - 8.8.8.8
-                - 8.8.4.4
+            routes:
+              - to: default
+                via: 10.1.1.1
+            match:
+              macaddress: 02:01:01:03:00:03
+            set-name: eth0
 
 runcmd:
   - netplan generate
   - netplan apply
+  - apt-get update
+  - apt-get install -y lynx
 EOT
   )
 }
@@ -116,25 +132,33 @@ chpasswd:
 ssh_pwauth: True
 
 write_files:
-  - path: /etc/netplan/01-netcfg.yaml
+  - path: /etc/netplan/50-cloud-init.yaml
     permissions: '0644'
     content: |
       network:
         version: 2
-        renderer: networkd
         ethernets:
           eth0:
             addresses:
               - 10.1.1.101/24
-            gateway4: 10.1.1.1
             nameservers:
               addresses:
                 - 8.8.8.8
-                - 8.8.4.4
+            routes:
+              - to: default
+                via: 10.1.1.1
+            match:
+              macaddress: 02:01:01:03:00:03
+            set-name: eth0
 
 runcmd:
   - netplan generate
   - netplan apply
+  - apt-get update
+  - apt-get install -y nginx
+  - systemctl enable nginx
+  - systemctl start nginx
+
 EOT
   )
 }
