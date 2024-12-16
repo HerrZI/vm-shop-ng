@@ -33,18 +33,45 @@ resource "cloudstack_network" "FISI24X_Team1_Network" {
 #  project           = cloudstack_project.FISI24X_Team1_Project.id
 }
 
-# 3. Compute Instance erstellen und mit dem Netzwerk verbinden
-resource "cloudstack_instance" "B-PC01" {
-  name           = "FISI24X-Team1-B-PC01-TF"
+# 3. Mehrere Compute Instanzen erstellen und mit dem Netzwerk verbinden
+variable "pc_instances" {
+  default = ["B-PC01", "R-PC01", "HB-PC01"] # Hier kannst du weitere Instanznamen hinzufügen
+}
+
+variable "dc_instances" {
+  default = ["B-DC01", "B-DC02", "HB-DC01", "R-DC01"] # Hier kannst du weitere Instanznamen hinzufügen
+}
+
+# 4. Compute Instance erstellen und mit dem Netzwerk verbinden
+resource "cloudstack_instance" "PC" {
+  for_each        = toset(var.pc_instances)
+  name            = "FISI24X-Team1-${each.value}-TF"
   service_offering = "Big Instance"  # Ersetze dies mit deinem spezifischen Service Offering
-  template        = "56b661ee-c4bb-4a10-9df4-e6830b1c5d69"  # Ersetze dies mit dem Namen/ID des Images
+  template        = "a06887cf-ebbd-44e5-8fd9-88795df535ab"  # Ersetze dies mit dem Namen/ID des Images
   network_id      = cloudstack_network.FISI24X_Team1_Network.id
   zone            = "Multi Media Berufsbildende Schulen"
   project         = "46a73fd5-a767-4244-a2bd-6253e655609d"
+  expunge           = true
+#  project         = "FISI24X_Team1"
+}
+
+resource "cloudstack_instance" "DC" {
+  for_each        = toset(var.dc_instances)
+  name            = "FISI24X-Team1-${each.value}-TF"
+  service_offering = "Big Instance"  # Ersetze dies mit deinem spezifischen Service Offering
+  template        = "f355eae1-9af1-4ec5-94b5-f06c7e109782"  # Ersetze dies mit dem Namen/ID des Images
+  network_id      = cloudstack_network.FISI24X_Team1_Network.id
+  zone            = "Multi Media Berufsbildende Schulen"
+  project         = "46a73fd5-a767-4244-a2bd-6253e655609d"
+  expunge           = true
 #  project         = "FISI24X_Team1"
 }
 
 # Ausgaben definieren
-output "FISI24X_Team1_B-PC01" {
-  value = cloudstack_instance.B-PC01.id
+output "FISI24X_Team1_PC_Instances" {
+  value = { for k, inst in cloudstack_instance.PC : k => inst.id }
+}
+
+output "FISI24X_Team1_DC_Instances" {  
+  value = { for k, inst in cloudstack_instance.DC : k => inst.id }
 }
