@@ -166,20 +166,28 @@ function Connect-CloudStack {
     Die optionale Beschreibung des Projekts.
 .PARAMETER Account
     Der Account, dem das Projekt zugewiesen werden soll.
+.PARAMETER Domain
+    Die optionale Domäne, der das Projekt zugewiesen werden soll.
 .EXAMPLE
-    New-CloudStackProject -Name "Projekt1" 
+    New-CloudStackProject -Name "Projekt1" -Domain "example.com"
+.ExAMPLE
+    "A","B","C" | New-cloudStackProject
+    Legt die Projekte A,B,C an
 #>
 function New-CloudStackProject {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [string]$Name,         # Name des Projekts
+        [string]$Name, # Name des Projekts
 
         [Parameter(Mandatory = $false)]
-        [string]$DisplayText,  # Optional: Beschreibung des Projekts
+        [string]$DisplayText, # Optional: Beschreibung des Projekts
 
         [Parameter(Mandatory = $false)]
-        [string]$Account       # Optional: Account, dem das Projekt zugewiesen werden soll
+        [string]$Account, # Optional: Account, dem das Projekt zugewiesen werden soll
+
+        [Parameter(Mandatory = $false)]
+        [string]$DomainID        # Optional: Domain-ID, der das Projekt zugewiesen werden soll
     )
 
     begin {
@@ -194,7 +202,7 @@ function New-CloudStackProject {
             # API-Parameter für die Erstellung des Projekts
             $Parameters = @{
                 "command" = "createProject"
-                "name" = $Name
+                "name"    = $Name
             }
             if ($DisplayText) {
                 $Parameters["displaytext"] = $DisplayText
@@ -202,9 +210,14 @@ function New-CloudStackProject {
             if ($Account) {
                 $Parameters["account"] = $Account
             }
+            if ($DomainID) {
+                $Parameters["domainid"] = $DomainID   # Korrekte Parameterübergabe
+            }
 
             # Signierte URL erstellen
             $SignedUrl = Get-SignedUrl -Parameters $Parameters
+
+            Write-Host "Signierte URL: $SignedUrl" -ForegroundColor Yellow
 
             # Anfrage an die API senden
             $Response = Invoke-RestMethod -Uri $SignedUrl -Method Get
@@ -221,17 +234,21 @@ function New-CloudStackProject {
                 if ($JobResult.jobstatus -eq 1) {
                     Write-Host "Projekt '$Name' erfolgreich erstellt." -ForegroundColor Green
                     return $JobResult.jobresult.project
-                } else {
+                }
+                else {
                     throw "Fehler bei der Projekterstellung. Job-Status: $($JobResult.jobstatus)"
                 }
-            } else {
+            }
+            else {
                 throw "Keine Job-ID erhalten. API-Antwort: $($Response | ConvertTo-Json -Depth 10)"
             }
-        } catch {
+        }
+        catch {
             Write-Error "Fehler beim Erstellen des Projekts '$Name': $_"
         }
     }
 }
+
 
 <#
 .SYNOPSIS
@@ -321,17 +338,20 @@ function Get-CloudStackProjects {
     Löscht ein CloudStack-Projekt.  
 .DESCRIPTION
     Diese Funktion löscht ein Projekt in CloudStack.
-.PARAMETER ProjectId
+.PARAMETER ID
     Die ID des zu löschenden Projekts.
 .EXAMPLE
-    Remove-CloudStackProject -ProjectId "1234"
+    Remove-CloudStackProject -ID "1234"
+.EXAMPLE
+    get-cloudStackProjects | Select-Object -ExpandProperty ID | Remove-CloudStackProject
+    Löscht alle Projekte
 
 #>
 function Remove-CloudStackProject {
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [string]$ProjectId   # ID des zu löschenden Projekts
+        [string]$ID   # ID des zu löschenden Projekts
     )
 
     begin {
@@ -344,11 +364,11 @@ function Remove-CloudStackProject {
     process {
         try {
             # Bestätigungsdialog
-            if ($PSCmdlet.ShouldProcess("Projekt mit ID '$ProjectId'", "Löschen")) {
+            if ($PSCmdlet.ShouldProcess("Projekt mit ID '$ID'", "Löschen")) {
                 # API-Parameter für das Löschen eines Projekts
                 $Parameters = @{
                     "command" = "deleteProject"
-                    "id"      = $ProjectId
+                    "id"      = $ID
                 }
 
                 # Signierte URL erstellen
@@ -360,14 +380,14 @@ function Remove-CloudStackProject {
                 # Überprüfung der Antwort
                 if ($Response.deleteprojectresponse.jobid) {
                     $JobId = $Response.deleteprojectresponse.jobid
-                    Write-Host "Löschen von Projekt '$ProjectId' gestartet. Warte auf Abschluss des Jobs ($JobId)..." -ForegroundColor Yellow
+                    Write-Host "Löschen von Projekt '$ID' gestartet. Warte auf Abschluss des Jobs ($JobId)..." -ForegroundColor Yellow
 
                     # Warte auf Job-Ergebnis
                     $JobResult = Wait-CloudStackJob -JobId $JobId
 
                     # Überprüfe das Ergebnis
                     if ($JobResult.jobstatus -eq 1) {
-                        Write-Host "Projekt '$ProjectId' erfolgreich gelöscht." -ForegroundColor Green
+                        Write-Host "Projekt '$ID' erfolgreich gelöscht." -ForegroundColor Green
                     } else {
                         throw "Fehler beim Löschen des Projekts. Job-Status: $($JobResult.jobstatus)"
                     }
