@@ -8,7 +8,7 @@ $config = Import-PowerShellDataFile -Path "config.psd1"
 $Klassen = Import-PowerShellDataFile -Path "LF10b_Klassen.psd1"
 
 # Variablen
-$logFile = "logfile.txt"
+$projectsFile = "projects.json"
 
 
 # Hauptteil des Skripts
@@ -19,7 +19,7 @@ Write-Host "Verbinde mit CloudStack..." $config.CSBaseUrl
 Connect-CloudStack -BaseUrl $config.CSBaseUrl -ApiKey $config.UserApiKey -SecretKey $config.UserSecretKey
 
 # Bestätigung ausschalten
-# $ConfirmPreference = "None"
+ $ConfirmPreference = "None"
 
 # Projekte löschen
 foreach ($Klasse in $Klassen.FisiKlassen) {
@@ -32,9 +32,9 @@ foreach ($Klasse in $Klassen.FisiKlassen) {
 }
 
 # Bestätigung einschalten
-# $ConfirmPreference = "High"
+ $ConfirmPreference = "High"
 
 # Inhalt der Logdatei leeren
-Set-Content -Path $logFile -Value ""
+Set-Content -Path $projectsFile -Value ""
 
 # Skriptende

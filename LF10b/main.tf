@@ -17,20 +17,16 @@ provider "cloudstack" {
   secret_key = var.secret_key
 }
 
-#resource "cloudstack_project" "FISI24X_Team1_Project" {
-#  name        = "FISI24X_Team1"
-#  display_text = "FISI24X_Team1"
+#variable "projects" {
+#  type = list(object({
+#    name = string
+#    id   = string
+#  }))
 #}
 
-# 2. Netzwerk erstellen und dem Projekt zuordnen
-resource "cloudstack_network" "FISI24X_Team1_Network" {
-  name              = "NW_FISI24X_Team1_TF"
-  display_text      = "NW_FISI24X_Team1_TF"
-  cidr              = "10.1.1.0/24"
-  network_offering  = "DefaultIsolatedNetworkOfferingWithSourceNatService" # Ersetze dies mit deinem spezifischen Network Offering
-  zone              = "Multi Media Berufsbildende Schulen" # Zone, in der das Netzwerk erstellt wird
-  project           = "46a73fd5-a767-4244-a2bd-6253e655609d"
-#  project           = cloudstack_project.FISI24X_Team1_Project.id
+# Lade die Projekte aus der von PorweShell erzeügten JSON-Datei 
+locals {
+  projects = jsondecode(file("projects.json"))
 }
 
 # 3. Mehrere Compute Instanzen erstellen und mit dem Netzwerk verbinden
@@ -42,36 +38,47 @@ variable "dc_instances" {
   default = ["B-DC01", "B-DC02", "HB-DC01", "R-DC01"] # Hier kannst du weitere Instanznamen hinzufügen
 }
 
-# 4. Compute Instance erstellen und mit dem Netzwerk verbinden
-resource "cloudstack_instance" "PC" {
-  for_each        = toset(var.pc_instances)
-  name            = "FISI24X-Team1-${each.value}-TF"
-  service_offering = "Big Instance"  # Ersetze dies mit deinem spezifischen Service Offering
-  template        = "a06887cf-ebbd-44e5-8fd9-88795df535ab"  # Ersetze dies mit dem Namen/ID des Images
-  network_id      = cloudstack_network.FISI24X_Team1_Network.id
-  zone            = "Multi Media Berufsbildende Schulen"
-  project         = "46a73fd5-a767-4244-a2bd-6253e655609d"
-  expunge           = true
-#  project         = "FISI24X_Team1"
+
+# 2. Netzwerk erstellen und dem Projekt zuordnen
+resource "cloudstack_network" "project_networks" {
+  for_each         = { for p in projects : p.name => p }
+  name             = "NW_${each.key}_TF"
+  display_text     = "NW_${each.key}_TF"
+  cidr             = "10.1.${index(projects, each.value)}.0/24"
+  network_offering = "DefaultIsolatedNetworkOfferingWithSourceNatService"
+  zone             = "Multi Media Berufsbildende Schulen"
+  project          = each.value.id
 }
 
+# 4. PC-Instanzen für alle Projekte erstellen und mit den Netzwerken verbinden
+resource "cloudstack_instance" "PC" {
+  count = length(projects) * length(pc_instances)
+  name             = "${projects[count.index / length(pc_instances)].name}-${pc_instances[count.index % length(pc_instances)]}"
+  service_offering = "Big Instance"
+  template         = "a06887cf-ebbd-44e5-8fd9-88795df535ab"
+  network_id       = cloudstack_network.project_networks[projects[count.index / length(pc_instances)].name].id
+  zone             = "Multi Media Berufsbildende Schulen"
+  project          = projects[count.index / length(pc_instances)].id
+  expunge          = true
+}
+
+# 5. DC-Instanzen für alle Projekte erstellen und mit den Netzwerken verbinden
 resource "cloudstack_instance" "DC" {
-  for_each        = toset(var.dc_instances)
-  name            = "FISI24X-Team1-${each.value}-TF"
-  service_offering = "Big Instance"  # Ersetze dies mit deinem spezifischen Service Offering
-  template        = "f355eae1-9af1-4ec5-94b5-f06c7e109782"  # Ersetze dies mit dem Namen/ID des Images
-  network_id      = cloudstack_network.FISI24X_Team1_Network.id
-  zone            = "Multi Media Berufsbildende Schulen"
-  project         = "46a73fd5-a767-4244-a2bd-6253e655609d"
-  expunge           = true
-#  project         = "FISI24X_Team1"
+  count            = length(projects) * length(dc_instances)
+  name             = "${projects[count.index / length(var.dc_instances)].name}-${dc_instances[count.index % length(dc_instances)]}"
+  service_offering = "Big Instance"
+  template         = "f355eae1-9af1-4ec5-94b5-f06c7e109782"
+  network_id       = cloudstack_network.project_networks[projects[count.index / length(dc_instances)].name].id
+  zone             = "Multi Media Berufsbildende Schulen"
+  project          = projects[count.index / length(dc_instances)].id
+  expunge          = true
 }
 
 # Ausgaben definieren
-output "FISI24X_Team1_PC_Instances" {
-  value = { for k, inst in cloudstack_instance.PC : k => inst.id }
+output "pc_instance_ids" {
+  value = { for k, v in cloudstack_instance.PC : k => [for inst in v : inst.id] }
 }
 
-output "FISI24X_Team1_DC_Instances" {  
-  value = { for k, inst in cloudstack_instance.DC : k => inst.id }
+output "dc_instance_ids" {
+  value = { for k, v in cloudstack_instance.DC : k => [for inst in v : inst.id] }
 }
