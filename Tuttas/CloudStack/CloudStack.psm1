@@ -4,6 +4,64 @@
 
 <#
 .SYNOPSIS
+    Verbindet das Skript mit einer CloudStack-Instanz.
+.DESCRIPTION
+    Diese Funktion stellt eine Verbindung zu einer CloudStack-Instanz her und speichert die Anmeldedaten als globale Variablen.
+.PARAMETER BaseUrl
+    Die Basis-URL der CloudStack API.
+.PARAMETER ApiKey
+    Der API-Schlüssel für die Authentifizierung.
+.PARAMETER SecretKey
+    Der geheime Schlüssel für die Authentifizierung.
+.EXAMPLE
+    Connect-CloudStack -BaseUrl "https://cloudstack.mm-bbs.de/client/api" -ApiKey "APIKEY" -SecretKey "SecretKey"
+#>
+function Connect-CloudStack {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUrl, # Basis-URL der CloudStack API
+
+        [Parameter(Mandatory = $true)]
+        [string]$ApiKey, # API-Schlüssel
+
+        [Parameter(Mandatory = $true)]
+        [string]$SecretKey  # Geheimschlüssel (Secret Key)
+    )
+
+    # Funktion zur Signierung der Anfrage
+    
+
+    try {
+        # Teste Verbindung mit listUsers
+        $Parameters = @{ "command" = "listProjects" }
+        $SignedUrl = Get-SignedUrl -BaseUrl $BaseUrl -ApiKey $ApiKey -SecretKey $SecretKey -Parameters $Parameters
+        #Write-Host "Generierte URL: $SignedUrl"
+        $Response = Invoke-RestMethod -Uri $SignedUrl -Method Get
+
+        #Write-Host "Response: $($Response)"
+
+        if ($Response) {
+            # Benutzerinformationen extrahieren
+            Write-Host "Erfolgreich mit CloudStack verbunden!" -ForegroundColor Green
+            
+            # Anmeldedaten als globale Variablen speichern
+            Set-Variable -Name "CloudStackBaseUrl" -Value $BaseUrl -Scope Global
+            Set-Variable -Name "CloudStackApiKey" -Value $ApiKey -Scope Global
+            Set-Variable -Name "CloudStackSecretKey" -Value $SecretKey -Scope Global
+            Set-Variable -Name "CloudStackUserName" -Value $UserName -Scope Global
+        }
+        else {
+            Write-Error "Fehler: Keine Benutzerinformationen gefunden."
+        }
+    }
+    catch {
+        Write-Error "Fehler bei der Verbindung: $_"
+    }
+}
+
+<#
+.SYNOPSIS
     Erstellt ein neues CloudStack-Projekt.
 .DESCRIPTION
     Diese Funktion erstellt ein neues Projekt in CloudStack.
@@ -16,7 +74,7 @@
 .PARAMETER Domain
     Die optionale Domäne, der das Projekt zugewiesen werden soll.
 .EXAMPLE
-    New-CloudStackProject -Name "Projekt1" -DomainId "654a7c05-8976-4802-8cea-02958f47eb2b"
+    New-CloudStackProject -Name "Projekt1" -Domain "example.com"
 .ExAMPLE
     "A","B","C" | New-cloudStackProject
     Legt die Projekte A,B,C an
@@ -125,7 +183,7 @@ function Get-CloudStackProjects {
         [string]$Account, # Optional: Filter nach Account
 
         [Parameter(Mandatory = $false)]
-        [string]$Name        # Optional: Filter nach Projektname
+        [switch]$ListAll     # Optional: Alle Projekte anzeigen
     )
 
     begin {
@@ -139,14 +197,15 @@ function Get-CloudStackProjects {
         try {
             # API-Parameter für die Projektsuche
             $Parameters = @{ "command" = "listProjects" }
+
             if ($DomainId) {
                 $Parameters["domainid"] = $DomainId
             }
             if ($Account) {
                 $Parameters["account"] = $Account
             }
-            if ($Name) {
-                $Parameters["name"] = $Name
+            if ($ListAll) {
+                $Parameters["listall"] = "true"
             }
 
             # Signierte URL erstellen
@@ -157,9 +216,7 @@ function Get-CloudStackProjects {
 
             # Überprüfung der Antwort
             if ($Response.listprojectsresponse.project) {
-                $Projects = $Response.listprojectsresponse.project
-                Write-Host "Projekte gefunden:" -ForegroundColor Green
-                $Projects | ForEach-Object {
+                $Response.listprojectsresponse.project | ForEach-Object {
                     [PSCustomObject]@{
                         ID          = $_.id
                         Name        = $_.name
@@ -531,6 +588,7 @@ function Get-CloudStackProjectMember {
         }
     }
 }
+
 
 
 # Export Cmdlets

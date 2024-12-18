@@ -99,6 +99,7 @@ function Wait-CloudStackJob {
     }
 }
 
+
 <#
 .SYNOPSIS
     Verbindet das Skript mit einer CloudStack-Instanz.
@@ -272,13 +273,13 @@ function Get-CloudStackProjects {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $false)]
-        [string]$DomainId, # Optional: Filter nach Domain-ID
+        [string]$DomainId,   # Optional: Filter nach Domain-ID
 
         [Parameter(Mandatory = $false)]
-        [string]$Account, # Optional: Filter nach Account
+        [string]$Account,    # Optional: Filter nach Account
 
         [Parameter(Mandatory = $false)]
-        [string]$Name        # Optional: Filter nach Projektname
+        [switch]$ListAll     # Optional: Alle Projekte anzeigen
     )
 
     begin {
@@ -292,14 +293,15 @@ function Get-CloudStackProjects {
         try {
             # API-Parameter für die Projektsuche
             $Parameters = @{ "command" = "listProjects" }
+
             if ($DomainId) {
                 $Parameters["domainid"] = $DomainId
             }
             if ($Account) {
                 $Parameters["account"] = $Account
             }
-            if ($Name) {
-                $Parameters["name"] = $Name
+            if ($ListAll) {
+                $Parameters["listall"] = "true"
             }
 
             # Signierte URL erstellen
@@ -310,9 +312,7 @@ function Get-CloudStackProjects {
 
             # Überprüfung der Antwort
             if ($Response.listprojectsresponse.project) {
-                $Projects = $Response.listprojectsresponse.project
-                Write-Host "Projekte gefunden:" -ForegroundColor Green
-                $Projects | ForEach-Object {
+                $Response.listprojectsresponse.project | ForEach-Object {
                     [PSCustomObject]@{
                         ID          = $_.id
                         Name        = $_.name
@@ -322,12 +322,10 @@ function Get-CloudStackProjects {
                         State       = $_.state
                     }
                 }
-            }
-            else {
+            } else {
                 Write-Warning "Keine Projekte gefunden."
             }
-        }
-        catch {
+        } catch {
             Write-Error "Fehler beim Abrufen der Projekte: $_"
         }
     }
