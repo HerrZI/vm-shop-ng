@@ -5,7 +5,6 @@ $config = Import-PowerShellDataFile -Path "config.psd1"
 . ../Tuttas/functions.ps1
 
 # Variablen
-#$FisiKlassen = @("FISI24A", "FISI24B", "FISI24C", "FISI24D", "FISI24E", "FISI24F", "FISI24G", "FISI24H", "FISI24I")
 $FisiKlassen = @("FISI24A", "FISI24B", "FISI24C", "FISI24D", "FISI24E", "FISI24F", "FISI24G", "FISI24H", "FISI24I")
 $NamensZusatz = "_ZI_PS_Test"
 
@@ -17,8 +16,6 @@ $NamensZusatz = "_ZI_PS_Test"
 # Mit Cloudstack verbinden
 Write-Host "Verbinde mit CloudStack..." $config.CSBaseUrl
 Connect-CloudStack -BaseUrl $config.CSBaseUrl -ApiKey $config.UserApiKey -SecretKey $config.UserSecretKey
-Get-CloudStackProjects
-#New-CloudStackProject -Name "ZI_TestProjekt_PS"
 
 # Projekte erstellen
 foreach ($Klasse in $FisiKlassen) {
