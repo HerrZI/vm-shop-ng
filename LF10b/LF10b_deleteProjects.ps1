@@ -1,12 +1,13 @@
-# Importiere die Konfigurationsdatei
+# Importiere die Konfigurationsdatei mit BaseUrl, API Key und Secret Key
 $config = Import-PowerShellDataFile -Path "config.psd1"
 
-# Importiere die Funktionen
+# Importiere die CloudStack Funktionen
 . ../Tuttas/functions.ps1
 
+#Importiere die anzulegenden Klassen (Projekte)
+$Klassen = Import-PowerShellDataFile -Path "LF10b_Klassen.psd1"
+
 # Variablen
-$FisiKlassen = @("FISI24A", "FISI24B", "FISI24C", "FISI24D", "FISI24E", "FISI24F", "FISI24G", "FISI24H", "FISI24I")
-$NamensZusatz = "_ZI_PS_Test"
 $logFile = "logfile.txt"
 
 
@@ -18,11 +19,11 @@ Write-Host "Verbinde mit CloudStack..." $config.CSBaseUrl
 Connect-CloudStack -BaseUrl $config.CSBaseUrl -ApiKey $config.UserApiKey -SecretKey $config.UserSecretKey
 
 # Bestätigung ausschalten
-$ConfirmPreference = "None"
+# $ConfirmPreference = "None"
 
 # Projekte löschen
-foreach ($Klasse in $FisiKlassen) {
-    $ProjektName = "$Klasse$NamensZusatz"
+foreach ($Klasse in $Klassen.FisiKlassen) {
+    $ProjektName = $Klasse + $Klassen.NamensZusatz
     Write-Host "Loesche Projekt $ProjektName..."
     $Projekt = Get-CloudStackProjects -Name $ProjektName
     $Projekt.Id
@@ -31,7 +32,7 @@ foreach ($Klasse in $FisiKlassen) {
 }
 
 # Bestätigung einschalten
-$ConfirmPreference = "High"
+# $ConfirmPreference = "High"
 
 # Inhalt der Logdatei leeren
 Set-Content -Path $logFile -Value ""
