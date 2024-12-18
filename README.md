@@ -1,9 +1,4 @@
 # vm-shop-ng
-## Konfiguration
-**Hinweis:** Ersetze in der Datei main.tf die Werte wie api_url, api_key, secret_key, your-windows-template-id und your-zone-name durch deine tatsächlichen CloudStack-Konfigurationswerte.
+## Konfiguration und Verwendung
+Siehe Readme in den Unterordnern.
 
-Zunächst muss der richtige Provider initialisiert werden, dieses geht über:
-
-```
-terraform init
-```

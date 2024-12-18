@@ -17,7 +17,7 @@ In der Variablen **NamensZusatz** kann man einen Prefix für die Projektnamen ve
 
 Rufe die Datei **LF10b_createProjects.ps1** auf, um die entsprechenden Projekte zu erzeugen.
 
-# 2. VMs in den Projekten anlegen
+## 2. VMs in den Projekten anlegen
 Rufe **terraform init** und anschließend **terraform apply** auf, um die Maschinen B-PC01, HB-PC01, R-PC01 und B-DC01, B-DC02, HB-DC01, R-DC01 zu erzeugen.
 Werden sie nicht mehr benötigt, können sie mit **terraform destroy** gelöscht werden.
 
