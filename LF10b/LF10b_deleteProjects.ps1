@@ -35,6 +35,6 @@ foreach ($project in $Klassen.projects) {
 # $ConfirmPreference = "High"
 
 # Inhalt der Projects Datei leeren
-Set-Content -Path $projectsFile -Value ""
+# Set-Content -Path $projectsFile -Value ""
 
 # Skriptende
