@@ -1,1 +1,6 @@
-
+{
+  "projects": [
+    { "name" : "FISI24A-ZI-PS-Test", "id" : "82661980-7262-4af2-afe7-01f17c4817f6" },
+    { "name" : "FISI24B-ZI-PS-Test", "id" : "d0304ce7-7294-4d58-95ef-43d666cde80e" }
+  ]
+}
