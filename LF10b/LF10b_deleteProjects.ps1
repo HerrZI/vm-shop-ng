@@ -9,6 +9,7 @@ $Klassen = Import-PowerShellDataFile -Path "LF10b_Klassen.psd1"
 
 # Variablen
 $projectsFile = "projects.json"
+$ProjectID_FISI_LF10B = "5b7e8018-d8bf-4e60-9f15-8d6083dbbfcb"
 
 
 # Hauptteil des Skripts
@@ -25,9 +26,9 @@ Connect-CloudStack -BaseUrl $config.CSBaseUrl -ApiKey $config.UserApiKey -Secret
 foreach ($Klasse in $Klassen.FisiKlassen) {
     $ProjektName = $Klasse + $Klassen.NamensZusatz
     Write-Host "Loesche Projekt $ProjektName..."
-    $Projekt = Get-CloudStackProjects -Name $ProjektName
+    $Projekt = Get-CloudStackProjects -DomainId $ProjectID_FISI_LF10B -Name $ProjektName
     $Projekt.Id
-    Remove-CloudStackProject -ProjectId $Projekt.Id
+    #Remove-CloudStackProject -ID $Projekt.Id
     Write-Host "Projekt $ProjektName geloescht."
 }
 
