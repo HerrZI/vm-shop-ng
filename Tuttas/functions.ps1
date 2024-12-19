@@ -279,7 +279,10 @@ function Get-CloudStackProjects {
         [string]$Account,    # Optional: Filter nach Account
 
         [Parameter(Mandatory = $false)]
-        [switch]$ListAll     # Optional: Alle Projekte anzeigen
+        [switch]$ListAll,     # Optional: Alle Projekte anzeigen
+
+        [Parameter(Mandatory = $false)]
+        [string]$Name        # Optional: Filter nach Projektname
     )
 
     begin {
@@ -302,6 +305,9 @@ function Get-CloudStackProjects {
             }
             if ($ListAll) {
                 $Parameters["listall"] = "true"
+            }
+             if ($Name) {
+                $Parameters["name"] = $Name
             }
 
             # Signierte URL erstellen
