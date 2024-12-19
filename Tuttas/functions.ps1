@@ -679,4 +679,183 @@ function Get-CloudStackProjectMember {
         }
     }
 }
+function Get-CloudStackUsers {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$DomainId,  # Optional: Filter nach Domain-ID
 
+        [Parameter(Mandatory = $false)]
+        [string]$Account,   # Optional: Filter nach Account
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ListAll    # Optional: Alle Benutzer anzeigen
+    )
+
+    begin {
+        # Globale Variablen prüfen
+        if (-not $Global:CloudStackBaseUrl -or -not $Global:CloudStackApiKey -or -not $Global:CloudStackSecretKey) {
+            throw "Bitte zuerst Connect-CloudStack ausführen, um eine Verbindung zu CloudStack herzustellen."
+        }
+    }
+
+    process {
+        try {
+            # API-Parameter für die Benutzerabfrage
+            $Parameters = @{ "command" = "listUsers" }
+
+            if ($DomainId) {
+                $Parameters["domainid"] = $DomainId
+            }
+            if ($Account) {
+                $Parameters["account"] = $Account
+            }
+            if ($ListAll) {
+                $Parameters["listall"] = "true"
+            }
+
+            # Signierte URL erstellen
+            $SignedUrl = Get-SignedUrl -Parameters $Parameters
+
+            # Anfrage an die API senden
+            $Response = Invoke-RestMethod -Uri $SignedUrl -Method Get
+
+            # Überprüfung der Antwort
+            if ($Response.listusersresponse.user) {
+                $Response.listusersresponse.user | ForEach-Object {
+                    [PSCustomObject]@{
+                        ID           = $_.id
+                        Username     = $_.username
+                        FirstName    = $_.firstname
+                        LastName     = $_.lastname
+                        Email        = $_.email
+                        Account      = $_.account
+                        Domain       = $_.domain
+                        State        = $_.state
+                        Created      = $_.created
+                    }
+                }
+            } else {
+                Write-Warning "Keine Benutzer gefunden."
+            }
+        } catch {
+            Write-Error "Fehler beim Abrufen der Benutzer: $_"
+        }
+    }
+}
+
+function Remove-CloudStackUser {
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
+    param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [string]$UserId  # ID des Benutzers, der gelöscht werden soll
+    )
+
+    begin {
+        # Globale Variablen prüfen
+        if (-not $Global:CloudStackBaseUrl -or -not $Global:CloudStackApiKey -or -not $Global:CloudStackSecretKey) {
+            throw "Bitte zuerst Connect-CloudStack ausführen, um eine Verbindung zu CloudStack herzustellen."
+        }
+    }
+
+    process {
+        try {
+            # Bestätigungsdialog
+            if ($PSCmdlet.ShouldProcess("Benutzer mit ID '$UserId'", "Löschen")) {
+                # API-Parameter für das Löschen des Benutzers
+                $Parameters = @{
+                    "command" = "deleteUser"
+                    "id"      = $UserId
+                }
+
+                # Signierte URL erstellen
+                $SignedUrl = Get-SignedUrl -Parameters $Parameters
+
+                # Anfrage an die API senden
+                $Response = Invoke-RestMethod -Uri $SignedUrl -Method Get
+
+                # Überprüfung der Antwort
+                if ($Response.deleteuserresponse) {
+                    Write-Host "Benutzer mit ID '$UserId' wurde erfolgreich gelöscht." -ForegroundColor Green
+                } else {
+                    throw "Benutzer konnte nicht gelöscht werden. API-Antwort: $($Response | ConvertTo-Json -Depth 10)"
+                }
+            }
+        } catch {
+            Write-Error "Fehler beim Löschen des Benutzers '$UserId': $_"
+        }
+    }
+}
+
+function New-CloudStackUser {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Username,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Password,
+
+        [Parameter(Mandatory = $true)]
+        [string]$FirstName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$LastName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Email,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Account,
+
+        [Parameter(Mandatory = $true)]
+        [string]$DomainID
+    )
+
+    begin {
+        # Globale Variablen prüfen
+        if (-not $Global:CloudStackBaseUrl -or -not $Global:CloudStackApiKey -or -not $Global:CloudStackSecretKey) {
+            throw "Bitte zuerst Connect-CloudStack ausführen, um eine Verbindung zu CloudStack herzustellen."
+        }
+    }
+
+    process {
+        try {
+            # API-Parameter
+            $Parameters = @{
+                "command"    = "createUser"
+                "username"   = $Username
+                "password"   = $Password
+                "firstname"  = $FirstName
+                "lastname"   = $LastName
+                "email"      = $Email
+                "account"    = $Account
+                "domainid"   = $DomainID
+            }
+
+            # Signierte URL erstellen
+            $SignedUrl = Get-SignedUrl -Parameters $Parameters
+
+            Write-Host "Signierte URL: $SignedUrl" -ForegroundColor Yellow
+            $Headers = @{
+    "Accept"       = "application/json"
+    "Content-Type" = "application/x-www-form-urlencoded"
+}
+            # Anfrage mit Invoke-WebRequest senden
+            $Response = Invoke-WebRequest -Uri $SignedUrl -Headers $Headers -Method Get
+
+
+            # JSON-Antwort parsen
+            $ParsedResponse = $Response.Content | ConvertFrom-Json
+
+            if ($ParsedResponse.createuserresponse) {
+                Write-Host "Benutzer '$Username' wurde erfolgreich erstellt." -ForegroundColor Green
+                return $ParsedResponse.createuserresponse
+            } else {
+                throw "Benutzer konnte nicht erstellt werden. API-Antwort: $($Response.Content)"
+            }
+        } catch {
+            Write-Error "Fehler beim Erstellen des Benutzers '$Username': $_"
+        }
+    }
+}
