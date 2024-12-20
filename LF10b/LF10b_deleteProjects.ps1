@@ -4,38 +4,37 @@ $config = Import-PowerShellDataFile -Path "config.psd1"
 # Importiere die CloudStack Funktionen
 . ../Tuttas/functions.ps1
 
-#Importiere die anzulegenden Klassen (Projekte)
-$Klassen = Import-PowerShellDataFile -Path "LF10b_Klassen.psd1"
-
 # Variablen
 $projectsFile = "projects.json"
-$ProjectID_FISI_LF10B = "5b7e8018-d8bf-4e60-9f15-8d6083dbbfcb"
 
+#Importiere die zu löschenden Klassen (Projekte)
+$jsonProjects = Get-Content -Path $projectsFile -Raw
+
+# In ein PowerShell-Objekt umwandeln
+$Klassen = $jsonProjects | ConvertFrom-Json
 
 # Hauptteil des Skripts
 #----------------------
-
 # Mit Cloudstack verbinden
 Write-Host "Verbinde mit CloudStack..." $config.CSBaseUrl
 Connect-CloudStack -BaseUrl $config.CSBaseUrl -ApiKey $config.UserApiKey -SecretKey $config.UserSecretKey
 
 # Bestätigung ausschalten
- $ConfirmPreference = "None"
+# $ConfirmPreference = "None"
 
 # Projekte löschen
-foreach ($Klasse in $Klassen.FisiKlassen) {
-    $ProjektName = $Klasse + $Klassen.NamensZusatz
-    Write-Host "Loesche Projekt $ProjektName..."
-    $Projekt = Get-CloudStackProjects -DomainId $ProjectID_FISI_LF10B -Name $ProjektName
-    $Projekt.Id
-    #Remove-CloudStackProject -ID $Projekt.Id
+foreach ($project in $Klassen.projects) {
+    $ProjektName = $project.name
+    $ProjektID = $project.id
+    Write-Host "Loesche Projekt $ProjektName mit der ID $ProjektID..."              
+    Remove-CloudStackProject -ID $ProjektID
     Write-Host "Projekt $ProjektName geloescht."
 }
 
 # Bestätigung einschalten
- $ConfirmPreference = "High"
+# $ConfirmPreference = "High"
 
-# Inhalt der Logdatei leeren
-Set-Content -Path $projectsFile -Value ""
+# Inhalt der Projects Datei leeren
+# Set-Content -Path $projectsFile -Value ""
 
 # Skriptende

@@ -17,13 +17,6 @@ provider "cloudstack" {
   secret_key = var.secret_key
 }
 
-#variable "projects" {
-#  type = list(object({
-#    name = string
-#    id   = string
-#  }))
-#}
-
 # Lade die Projekte aus der von PorweShell erzeügten JSON-Datei 
 locals {
   projects = jsondecode(file("projects.json"))
@@ -38,47 +31,45 @@ variable "dc_instances" {
   default = ["B-DC01", "B-DC02", "HB-DC01", "R-DC01"] # Hier kannst du weitere Instanznamen hinzufügen
 }
 
-
 # 2. Netzwerk erstellen und dem Projekt zuordnen
-resource "cloudstack_network" "project_networks" {
-  for_each         = { for p in projects : p.name => p }
-  name             = "NW_${each.key}_TF"
-  display_text     = "NW_${each.key}_TF"
-  cidr             = "10.1.${index(projects, each.value)}.0/24"
-  network_offering = "DefaultIsolatedNetworkOfferingWithSourceNatService"
-  zone             = "Multi Media Berufsbildende Schulen"
-  project          = each.value.id
+resource "cloudstack_network" "project_networks" {  
+  count             = length(local.projects.projects)
+  name              = "NW-${local.projects.projects[count.index].name}-TF"
+  display_text      = "NW-${local.projects.projects[count.index].name}-TF"
+  cidr              = "10.1.0.0/24"
+  network_offering  = "DefaultIsolatedNetworkOfferingWithSourceNatService" # Ersetze dies mit deinem spezifischen Network Offering
+  zone              = "Multi Media Berufsbildende Schulen" # Zone, in der das Netzwerk erstellt wird
+  project           = local.projects.projects[count.index].id
 }
 
-# 4. PC-Instanzen für alle Projekte erstellen und mit den Netzwerken verbinden
+# 4. Compute Instance erstellen und mit dem Netzwerk verbinden
 resource "cloudstack_instance" "PC" {
-  count = length(projects) * length(pc_instances)
-  name             = "${projects[count.index / length(pc_instances)].name}-${pc_instances[count.index % length(pc_instances)]}"
+  count            = length(local.projects.projects) * length(var.pc_instances)
+  name             = "${local.projects.projects[floor(count.index / length(var.pc_instances))].name}-${var.pc_instances[count.index % length(var.pc_instances)]}-TF"
   service_offering = "Big Instance"
   template         = "a06887cf-ebbd-44e5-8fd9-88795df535ab"
-  network_id       = cloudstack_network.project_networks[projects[count.index / length(pc_instances)].name].id
+  network_id       = cloudstack_network.project_networks[floor(count.index / length(var.pc_instances))].id
   zone             = "Multi Media Berufsbildende Schulen"
-  project          = projects[count.index / length(pc_instances)].id
+  project          = local.projects.projects[floor(count.index / length(var.pc_instances))].id
   expunge          = true
 }
 
-# 5. DC-Instanzen für alle Projekte erstellen und mit den Netzwerken verbinden
-resource "cloudstack_instance" "DC" {
-  count            = length(projects) * length(dc_instances)
-  name             = "${projects[count.index / length(var.dc_instances)].name}-${dc_instances[count.index % length(dc_instances)]}"
+resource "cloudstack_instance" "DC" { 
+  count            = length(local.projects.projects) * length(var.dc_instances)
+  name             = "${local.projects.projects[floor(count.index / length(var.dc_instances))].name}-${var.dc_instances[count.index % length(var.dc_instances)]}-TF"
   service_offering = "Big Instance"
   template         = "f355eae1-9af1-4ec5-94b5-f06c7e109782"
-  network_id       = cloudstack_network.project_networks[projects[count.index / length(dc_instances)].name].id
+  network_id       = cloudstack_network.project_networks[floor(count.index / length(var.dc_instances))].id
   zone             = "Multi Media Berufsbildende Schulen"
-  project          = projects[count.index / length(dc_instances)].id
+  project          = local.projects.projects[floor(count.index / length(var.dc_instances))].id
   expunge          = true
 }
 
 # Ausgaben definieren
-output "pc_instance_ids" {
-  value = { for k, v in cloudstack_instance.PC : k => [for inst in v : inst.id] }
+output "PC_Instances" {
+  value = [for instance in cloudstack_instance.PC : instance.id]
 }
 
-output "dc_instance_ids" {
-  value = { for k, v in cloudstack_instance.DC : k => [for inst in v : inst.id] }
+output "DC_Instances" {  
+  value = [for instance in cloudstack_instance.DC : instance.id]
 }
