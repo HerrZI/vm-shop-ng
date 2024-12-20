@@ -47,6 +47,9 @@
     $SortedParams = $Parameters.GetEnumerator() | Sort-Object Name
     $QueryString = $SortedParams.ForEach({ "$($_.Name)=$($_.Value)" }) -join "&"
 
+    #Write-Host "Query String:"+$QueryString 
+    #Write-Host "Secret Key"+$SecretKey
+
     # Signiere die Anfrage
     $Encoding = [System.Text.Encoding]::UTF8
     $HmacSha1 = New-Object System.Security.Cryptography.HMACSHA1
@@ -679,21 +682,132 @@ function Get-CloudStackProjectMember {
         }
     }
 }
-function Get-CloudStackUsers {
+
+<#
+.SYNOPSIS
+    Erstellt einen neuen CloudStack-Account.
+.DESCRIPTION
+    Diese Funktion erstellt einen neuen Account in CloudStack.
+.PARAMETER AccountName
+    Der Name des neuen Accounts.
+.PARAMETER Email
+    Die E-Mail-Adresse des neuen Accounts.
+.PARAMETER FirstName
+    Der Vorname des Accountinhabers.
+.PARAMETER LastName
+    Der Nachname des Accountinhabers.
+.PARAMETER Username
+    Der Benutzername des neuen Accounts.
+.PARAMETER Password
+    Das Passwort des neuen Accounts.
+.PARAMETER DomainID
+    Die ID der Domain, zu der der Account hinzugefügt werden soll.
+.PARAMETER AccountType
+    Der Typ des Accounts: 0 = User, 1 = Admin, 2 = Domain-Admin (Standard: 0)
+.EXAMPLE
+    New-CloudStackAccount -AccountName "Account1" -Email "test@test.de" -FirstName "Max" -LastName "Mustermann" -Username "user1" -Password "password" -DomainID "1234"
+
+#>
+function New-CloudStackAccount {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $false)]
-        [string]$DomainId,  # Optional: Filter nach Domain-ID
+        [Parameter(Mandatory = $true)]
+        [string]$AccountName,    # Name des neuen Accounts
+
+        [Parameter(Mandatory = $true)]
+        [string]$Email,          # Email des Accounts
+
+        [Parameter(Mandatory = $true)]
+        [string]$FirstName,      # Vorname des Accountinhabers
+
+        [Parameter(Mandatory = $true)]
+        [string]$LastName,       # Nachname des Accountinhabers
+
+        [Parameter(Mandatory = $true)]
+        [string]$Username,       # Benutzername
+
+        [Parameter(Mandatory = $true)]
+        [string]$Password,       # Passwort
+
+        [Parameter(Mandatory = $true)]
+        [string]$DomainID, 
 
         [Parameter(Mandatory = $false)]
-        [string]$Account,   # Optional: Filter nach Account
-
-        [Parameter(Mandatory = $false)]
-        [switch]$ListAll    # Optional: Alle Benutzer anzeigen
+        [string]$AccountType = "0"  # Typ des Accounts: 0 = User, 1 = Admin, 2 = Domain-Admin
     )
 
     begin {
-        # Globale Variablen prüfen
+        # Überprüfe globale Variablen
+        if (-not $Global:CloudStackBaseUrl -or -not $Global:CloudStackApiKey -or -not $Global:CloudStackSecretKey) {
+            throw "Bitte zuerst Connect-CloudStack ausführen, um eine Verbindung zu CloudStack herzustellen."
+        }
+
+        if (-not $DomainID) {
+            throw "DomainID ist erforderlich. Bitte angeben oder setzen Sie die globale Variable 'CloudStackDomainID'."
+        }
+    }
+
+    process {
+        try {
+            # API-Parameter definieren
+            $Parameters = @{
+                "command"     = "createAccount"
+                "account"     = $AccountName
+                "email"       = $Email.Replace("@","%40")
+                "firstname"   = $FirstName
+                "lastname"    = $LastName
+                "username"    = $Username
+                "password"    = $Password
+                "domainid"    = $DomainID
+                "accounttype" = $AccountType
+                "response"    = "json"
+            }
+
+            # Signierte URL erstellen
+            $SignedUrl = Get-SignedUrl -Parameters $Parameters
+
+            Write-Host $SignedUrl -ForegroundColor yell
+
+            # Anfrage senden
+            $Response = Invoke-RestMethod -Uri $SignedUrl -Method Get
+
+            # Überprüfe API-Antwort
+            if ($Response.createaccountresponse) {
+                Write-Host "Account '$AccountName' erfolgreich erstellt!" -ForegroundColor Green
+                return $Response.createaccountresponse.account
+            } else {
+                throw "Fehler beim Erstellen des Accounts: $($Response | ConvertTo-Json -Depth 10)"
+            }
+        } catch {
+            Write-Error "Fehler beim Erstellen des Accounts '$AccountName': $_"
+        }
+    }
+}
+
+<#
+.SYNOPSIS
+    Gibt alle CloudStack-Accounts zurück.
+.DESCRIPTION
+    Diese Funktion gibt alle Accounts in CloudStack zurück.
+.PARAMETER DomainID
+    Die ID der Domain, nach der gefiltert werden soll.
+.PARAMETER ListAll
+    Gibt alle Accounts zurück, unabhängig von den Zugriffsrechten.
+.EXAMPLE
+    Get-CloudStackAccounts -DomainID "1234"
+#>
+function Get-CloudStackAccounts {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]$DomainID,  # Optional: Filter nach einer bestimmten DomainID
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ListAll    # Optional: Alle Accounts unabhängig von Zugriff
+    )
+
+    begin {
+        # Überprüfe globale Variablen
         if (-not $Global:CloudStackBaseUrl -or -not $Global:CloudStackApiKey -or -not $Global:CloudStackSecretKey) {
             throw "Bitte zuerst Connect-CloudStack ausführen, um eine Verbindung zu CloudStack herzustellen."
         }
@@ -701,15 +815,16 @@ function Get-CloudStackUsers {
 
     process {
         try {
-            # API-Parameter für die Benutzerabfrage
-            $Parameters = @{ "command" = "listUsers" }
+            # API-Parameter definieren
+            $Parameters = @{
+                "command"  = "listAccounts"
+                "response" = "json"
+            }
 
-            if ($DomainId) {
-                $Parameters["domainid"] = $DomainId
+            if ($DomainID) {
+                $Parameters["domainid"] = $DomainID
             }
-            if ($Account) {
-                $Parameters["account"] = $Account
-            }
+
             if ($ListAll) {
                 $Parameters["listall"] = "true"
             }
@@ -717,42 +832,52 @@ function Get-CloudStackUsers {
             # Signierte URL erstellen
             $SignedUrl = Get-SignedUrl -Parameters $Parameters
 
-            # Anfrage an die API senden
+            # Anfrage senden
             $Response = Invoke-RestMethod -Uri $SignedUrl -Method Get
 
-            # Überprüfung der Antwort
-            if ($Response.listusersresponse.user) {
-                $Response.listusersresponse.user | ForEach-Object {
+            # Überprüfung der API-Antwort
+            if ($Response.listaccountsresponse.account) {
+                $Accounts = $Response.listaccountsresponse.account
+                # Gib die Accounts als PowerShell-Objekte zurück
+                $Accounts | ForEach-Object {
                     [PSCustomObject]@{
-                        ID           = $_.id
-                        Username     = $_.username
-                        FirstName    = $_.firstname
-                        LastName     = $_.lastname
-                        Email        = $_.email
-                        Account      = $_.account
-                        Domain       = $_.domain
-                        State        = $_.state
-                        Created      = $_.created
+                        ID          = $_.id
+                        Name        = $_.name
+                        Type        = if ($_.accounttype -eq 1) { "Admin" } elseif ($_.accounttype -eq 2) { "Domain Admin" } else { "User" }
+                        DomainID    = $_.domainid
+                        DomainName  = $_.domain
+                        Email       = $_.email
+                        State       = $_.state
                     }
                 }
             } else {
-                Write-Warning "Keine Benutzer gefunden."
+                Write-Warning "Keine Accounts gefunden."
             }
         } catch {
-            Write-Error "Fehler beim Abrufen der Benutzer: $_"
+            Write-Error "Fehler beim Abrufen der Accounts: $_"
         }
     }
 }
 
-function Remove-CloudStackUser {
+<#
+.SYNOPSIS
+    Löscht einen CloudStack-Account.
+.DESCRIPTION
+    Diese Funktion löscht einen Account in CloudStack.
+.PARAMETER AccountID
+    Die ID des zu löschenden Accounts.
+.EXAMPLE
+    Remove-CloudStackAccount -AccountID "1234"
+#>
+function Remove-CloudStackAccount {
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [string]$UserId  # ID des Benutzers, der gelöscht werden soll
+        [string]$AccountID  # Die ID des zu löschenden Accounts
     )
 
     begin {
-        # Globale Variablen prüfen
+        # Überprüfe globale Variablen
         if (-not $Global:CloudStackBaseUrl -or -not $Global:CloudStackApiKey -or -not $Global:CloudStackSecretKey) {
             throw "Bitte zuerst Connect-CloudStack ausführen, um eine Verbindung zu CloudStack herzustellen."
         }
@@ -761,101 +886,29 @@ function Remove-CloudStackUser {
     process {
         try {
             # Bestätigungsdialog
-            if ($PSCmdlet.ShouldProcess("Benutzer mit ID '$UserId'", "Löschen")) {
-                # API-Parameter für das Löschen des Benutzers
+            if ($PSCmdlet.ShouldProcess("Account mit ID '$AccountID'", "Löschen")) {
+                # API-Parameter definieren
                 $Parameters = @{
-                    "command" = "deleteUser"
-                    "id"      = $UserId
+                    "command"  = "deleteAccount"
+                    "id"       = $AccountID
+                    "response" = "json"
                 }
 
                 # Signierte URL erstellen
                 $SignedUrl = Get-SignedUrl -Parameters $Parameters
 
-                # Anfrage an die API senden
+                # Anfrage senden
                 $Response = Invoke-RestMethod -Uri $SignedUrl -Method Get
 
-                # Überprüfung der Antwort
-                if ($Response.deleteuserresponse) {
-                    Write-Host "Benutzer mit ID '$UserId' wurde erfolgreich gelöscht." -ForegroundColor Green
+                # Überprüfung der API-Antwort
+                if ($Response.deleteaccountresponse) {
+                    Write-Host "Account mit ID '$AccountID' erfolgreich gelöscht." -ForegroundColor Green
                 } else {
-                    throw "Benutzer konnte nicht gelöscht werden. API-Antwort: $($Response | ConvertTo-Json -Depth 10)"
+                    throw "Fehler beim Löschen des Accounts: $($Response | ConvertTo-Json -Depth 10)"
                 }
             }
         } catch {
-            Write-Error "Fehler beim Löschen des Benutzers '$UserId': $_"
-        }
-    }
-}
-
-function New-CloudStackUser {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$Username,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Password,
-
-        [Parameter(Mandatory = $true)]
-        [string]$FirstName,
-
-        [Parameter(Mandatory = $true)]
-        [string]$LastName,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Email,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Account,
-
-        [Parameter(Mandatory = $true)]
-        [string]$DomainID
-    )
-
-    begin {
-        # Globale Variablen prüfen
-        if (-not $Global:CloudStackBaseUrl -or -not $Global:CloudStackApiKey -or -not $Global:CloudStackSecretKey) {
-            throw "Bitte zuerst Connect-CloudStack ausführen, um eine Verbindung zu CloudStack herzustellen."
-        }
-    }
-
-    process {
-        try {
-            # API-Parameter
-            $Parameters = @{
-                "command"    = "createUser"
-                "username"   = $Username
-                "password"   = $Password
-                "firstname"  = $FirstName
-                "lastname"   = $LastName
-                "email"      = $Email
-                "account"    = $Account
-                "domainid"   = $DomainID
-            }
-
-            # Signierte URL erstellen
-            $SignedUrl = Get-SignedUrl -Parameters $Parameters
-
-            Write-Host "Signierte URL: $SignedUrl" -ForegroundColor Yellow
-            $Headers = @{
-    "Accept"       = "application/json"
-    "Content-Type" = "application/x-www-form-urlencoded"
-}
-            # Anfrage mit Invoke-WebRequest senden
-            $Response = Invoke-WebRequest -Uri $SignedUrl -Headers $Headers -Method Get
-
-
-            # JSON-Antwort parsen
-            $ParsedResponse = $Response.Content | ConvertFrom-Json
-
-            if ($ParsedResponse.createuserresponse) {
-                Write-Host "Benutzer '$Username' wurde erfolgreich erstellt." -ForegroundColor Green
-                return $ParsedResponse.createuserresponse
-            } else {
-                throw "Benutzer konnte nicht erstellt werden. API-Antwort: $($Response.Content)"
-            }
-        } catch {
-            Write-Error "Fehler beim Erstellen des Benutzers '$Username': $_"
+            Write-Error "Fehler beim Löschen des Accounts mit ID '$AccountID': $_"
         }
     }
 }
