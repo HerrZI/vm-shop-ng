@@ -1,8 +1,13 @@
-## Ressources für Images
+# Installation des Moduls CSHelper
 
-<http://dl.openvm.eu/>
+Zum Installieren des Mdoult öffnen Sie eine Powershell Console und schreiben:
 
-## Zugangsdaten für die VMs
+```ps
+Install-Module -Name CSHelper
+```
 
-Benutzername "ubuntu"
-Kennwort "geheim"
+Ob die Module geladen wurden können Sie über folgenden Powershell Befehl abfragen:
+
+```ps
+Get-Command -Module CSHelper
+```
