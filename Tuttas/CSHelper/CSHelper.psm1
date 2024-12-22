@@ -1060,6 +1060,139 @@ function New-CloudStackUser {
 }
 
 
+<#
+.SYNOPSIS
+Setzt das Limit für eine bestimmte Ressource (z. B. VMs, Speicher, Netzwerke) in CloudStack.
+
+.DESCRIPTION
+Dieses Cmdlet erlaubt es, das Limit für Ressourcen wie Benutzerinstanzen, öffentliche IP-Adressen, Volumes usw. 
+für einen spezifischen Account, eine Domain oder ein Projekt zu konfigurieren.
+
+.PARAMETER ResourceType
+Der Typ der Ressource, deren Limit geändert werden soll. Die folgenden Werte sind verfügbar:
+
+    ResourceType | Beschreibung
+    -------------|----------------------------
+    0            | Benutzerinstanzen (VMs)
+    1            | Öffentliche IP-Adressen
+    2            | Volumes
+    3            | Snapshots
+    4            | Templates
+    5            | Projekte
+    6            | Netzwerke
+    7            | VPCs
+    8            | CPU-Kerne
+    9            | Arbeitsspeicher (RAM)
+    10           | Primärer Speicher (GiB)
+    11           | Sekundärer Speicher (GiB)
+
+.PARAMETER MaxLimit
+Der neue maximale Wert, der für die angegebene Ressource festgelegt werden soll.
+
+.PARAMETER Account
+(Optional) Der Account, für den das Limit geändert werden soll.
+
+.PARAMETER DomainID
+(Optional) Die Domain, für die das Limit geändert werden soll.
+
+.PARAMETER ProjectID
+(Optional) Das Projekt, für das das Limit geändert werden soll.
+
+.EXAMPLE
+Set-CloudStackResourceLimit -ResourceType 0 -MaxLimit 50
+
+Setzt das Limit für Benutzerinstanzen (VMs) global auf 50.
+
+.EXAMPLE
+Set-CloudStackResourceLimit -ResourceType 1 -MaxLimit 30 -Account "TestAccount"
+
+Setzt das Limit für öffentliche IPs auf 30 für den Account "TestAccount".
+
+.EXAMPLE
+Set-CloudStackResourceLimit -ResourceType 9 -MaxLimit 81920 -DomainID "5bf5927f-91dd-11ef-bd59-46e70d67c9bd"
+
+Setzt das Limit für Arbeitsspeicher (RAM) auf 81.920 MiB in der angegebenen Domain.
+
+.EXAMPLE
+Set-CloudStackResourceLimit -ResourceType 10 -MaxLimit 500 -ProjectID "12345-abcde-67890-fghij"
+
+Setzt das Limit für primären Speicher (GiB) auf 500 für das Projekt mit der angegebenen ID.
+
+.NOTES
+- Globale Variablen wie $CloudStackBaseUrl, $CloudStackApiKey und $CloudStackSecretKey müssen gesetzt sein.
+- Das Cmdlet überprüft die Berechtigungen und erwartet, dass der API-Benutzer die entsprechenden Rechte besitzt.
+- Bei Fehlern prüfe die CloudStack-Logs auf dem Server: /var/log/cloudstack/management/management-server.log.
+
+#>
+function Set-CloudStackResourceLimit {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [int]$ResourceType, # Die Art der Ressource (z. B. 0 für Instanzen, 1 für IPs usw.)
+
+        [Parameter(Mandatory = $true)]
+        [int]$MaxLimit, # Der neue maximale Wert für die Ressource
+
+        [Parameter(Mandatory = $false)]
+        [string]$Account, # Optional: Der Account, für den das Limit geändert wird
+
+        [Parameter(Mandatory = $false)]
+        [string]$DomainID, # Optional: Die Domain, für die das Limit geändert wird
+
+        [Parameter(Mandatory = $false)]
+        [string]$ProjectID        # Optional: Das Projekt, für das das Limit geändert wird
+    )
+
+    begin {
+        # Überprüfe globale Variablen
+        if (-not $Global:CloudStackBaseUrl -or -not $Global:CloudStackApiKey -or -not $Global:CloudStackSecretKey) {
+            throw "Bitte zuerst Connect-CloudStack ausführen, um eine Verbindung zu CloudStack herzustellen."
+        }
+    }
+
+    process {
+        try {
+            # API-Parameter definieren
+            $Parameters = @{
+                "command"      = "updateResourceLimit"
+                "resourcetype" = $ResourceType
+                "max"          = $MaxLimit
+                "response"     = "json"
+            }
+
+            if ($Account) {
+                $Parameters["account"] = $Account
+            }
+
+            if ($DomainID) {
+                $Parameters["domainid"] = $DomainID
+            }
+
+            if ($ProjectID) {
+                $Parameters["projectid"] = $ProjectID
+            }
+
+            # Signierte URL erstellen
+            $SignedUrl = Get-SignedUrl -Parameters $Parameters
+
+            # Anfrage senden
+            $Response = Invoke-RestMethod -Uri $SignedUrl -Method Get
+
+            # Überprüfung der API-Antwort
+            if ($Response.updateresourcelimitresponse) {
+                Write-Host "Das Limit für Ressourcentyp '$ResourceType' wurde erfolgreich auf '$MaxLimit' gesetzt." -ForegroundColor Green
+            }
+            else {
+                throw "Fehler beim Aktualisieren des Limits: $($Response | ConvertTo-Json -Depth 10)"
+            }
+        }
+        catch {
+            Write-Error "Fehler beim Setzen des Limits: $_"
+        }
+    }
+}
+
+
 
 # Export Cmdlets
-Export-ModuleMember -Function Connect-CloudStack, Add-CloudStackProjectMember, Get-CloudStackProjectMember, Remove-CloudStackProjectMember, Get-CloudStackProjects, New-CloudStackProject, Remove-CloudStackProject, Test-CloudStackProject, Get-CloudStackAccounts, New-CloudStackAccount, Remove-CloudStackAccount, Get-CloudStackUsers, New-CloudStackUser, Remove-CloudStackUser
+Export-ModuleMember -Function Connect-CloudStack, Add-CloudStackProjectMember, Get-CloudStackProjectMember, Remove-CloudStackProjectMember, Get-CloudStackProjects, New-CloudStackProject, Remove-CloudStackProject, Test-CloudStackProject, Get-CloudStackAccounts, New-CloudStackAccount, Remove-CloudStackAccount, Get-CloudStackUsers, New-CloudStackUser, Remove-CloudStackUser, Set-CloudStackResourceLimit
