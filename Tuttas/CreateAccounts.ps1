@@ -70,12 +70,13 @@ foreach ($row in $data) {
 
     # Prüfe, ob der Account für die Gruppe existiert
     if (-not $createdAccounts.ContainsKey($group)) {
-        Write-Host "Erstelle Account für Gruppe: $group"
+        Write-Host "Erstelle Account für Gruppe: ($group)"
 
         # Account erstellen
         try {
-            
-            $createAccountResult = New-CloudStackAccount -AccountName $group -DomainID "$($domainID)" -AccountType "0" -Email "$($group)@mm-bbs.de" -FirstName "Group" -LastName $group -UserName $group -Password $groupPassword
+            $groupMail = $group + "@mm-bbs.de"
+            #Write-Host "New CloudSatck Account AccountName=$group DomainID=$domainID AccountType=0 Email=$groupMail FirstName=Group LastName=$group UserName=$group Password=$groupPassword"
+            $createAccountResult = New-CloudStackAccount -AccountName $group -DomainID "$($domainID)" -AccountType 0 -Email $groupMail -FirstName "Group" -LastName $group -UserName $group -Password $groupPassword
             if ($createAccountResult) {
                 $createdAccounts[$group] = $createAccountResult.ID
                 Write-Host "Account '$group' erfolgreich erstellt."
