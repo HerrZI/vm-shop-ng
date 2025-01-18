@@ -43,12 +43,23 @@ function Get-SignedUrl {
         }
     }
 
+    # Kopiere die Schlüssel in eine separate Liste
+    $keyList = $Parameters.Keys | ForEach-Object { $_ }
+
+    # Werte URL-dekodieren
+    foreach ($key in $keyList) {
+        $Parameters[$key] = [System.Web.HttpUtility]::UrlEncode($Parameters[$key])
+    }
+
     $Parameters["apikey"] = $ApiKey
     $Parameters["response"] = "json"
 
     # Sortiere die Parameter alphabetisch
     $SortedParams = $Parameters.GetEnumerator() | Sort-Object Name
     $QueryString = $SortedParams.ForEach({ "$($_.Name)=$($_.Value)" }) -join "&"
+
+    #Write-Host "Query String:"+$QueryString 
+    #Write-Host "Secret Key"+$SecretKey
 
     # Signiere die Anfrage
     $Encoding = [System.Text.Encoding]::UTF8
