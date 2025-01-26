@@ -17,26 +17,16 @@ provider "cloudstack" {
   secret_key = var.secret_key
 }
 
-resource "cloudstack_template" "template1" {
-  name          = "TuttasTemplate"
-  os_type      = "Ubuntu 18.04 LTS"
-  zone            = "a4848bf1-b2d1-4b39-97e3-72106df81f09"
-  url           = "http://dl.openvm.eu/cloudstack/ubuntu/x86_64/ubuntu-18.04-kvm.qcow2.bz2"
-  format        = "QCOW2"
-  hypervisor    = "KVM"
-  password_enabled = true
-  
-  
-}
+
 
 # Netzwerk definieren
 resource "cloudstack_network" "vlan_network" {
-  name             = "VLAN-Network"
+  name             = "NetworkTU2"
   display_text     = "VLAN Network for Linux VMs"
   network_offering = "12d4fc87-3718-40b0-9707-2b53b8555cda"  # Beispiel-Network Offering
   zone             = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID
   cidr             = "10.1.1.0/24"
-  vlan             = "250"  # Beispiel: VLAN-ID 300
+  #vlan             = "250"  # Beispiel: VLAN-ID 300
 }
 
 
@@ -55,7 +45,7 @@ resource "cloudstack_instance" "vm1" {
   name              = "linux-vm1"
   display_name      = "Linux VM 1"
   service_offering  = "Big Instance"
-  template          = cloudstack_template.template1.id
+  template          = "f5295a59-8eb5-4c73-9768-cf67dcf3656b"
   zone              = "a4848bf1-b2d1-4b39-97e3-72106df81f09"
   network_id        = cloudstack_network.vlan_network.id
   root_disk_size    = 20
@@ -64,10 +54,13 @@ resource "cloudstack_instance" "vm1" {
   ip_address        = "10.1.1.100"
 
   # Cloud-Init für Passwort, Gateway und DNS
-  user_data = base64encode(<<EOT
+  user_data = <<EOT
 #cloud-config
 datasource:
   None
+
+network:
+  config: disabled
 
 password: geheim
 chpasswd:
@@ -77,13 +70,19 @@ chpasswd:
 ssh_pwauth: True
 
 write_files:
-  - path: /etc/netplan/50-cloud-init.yaml
+  - path: /tmp/test-file.txt
+    permissions: '0644'
+    content: |
+      Hello, this is a test file.
+  - path: /etc/netplan/51-cloud-init.yaml
     permissions: '0644'
     content: |
       network:
         version: 2
         ethernets:
-          eth0:
+          ens3:
+            optional: false
+            dhcp4: false
             addresses:
               - 10.1.1.100/24
             nameservers:
@@ -92,17 +91,16 @@ write_files:
             routes:
               - to: default
                 via: 10.1.1.1
-            match:
-              macaddress: 02:01:01:03:00:03
-            set-name: eth0
+
+bootcmd:
+  - ip link set ens3 up
 
 runcmd:
   - netplan generate
   - netplan apply
-  - apt-get update
+  - apt-get update -y
   - apt-get install -y lynx
 EOT
-  )
 }
 
 
@@ -110,7 +108,7 @@ resource "cloudstack_instance" "vm2" {
   name              = "linux-vm2"
   display_name      = "Linux VM 2"
   service_offering  = "Big Instance"
-  template          = cloudstack_template.template1.id
+  template          = "f5295a59-8eb5-4c73-9768-cf67dcf3656b"
   zone              = "a4848bf1-b2d1-4b39-97e3-72106df81f09"
   network_id        = cloudstack_network.vlan_network.id
   root_disk_size    = 20
@@ -119,26 +117,32 @@ resource "cloudstack_instance" "vm2" {
   ip_address        = "10.1.1.101"
 
   # Cloud-init: Benutzername, Passwort, Netzwerk und DNS
-  user_data = base64encode(<<EOT
+  user_data = <<EOT
 #cloud-config
 datasource:
   None
+
+network:
+  config: disabled
 
 password: geheim
 chpasswd:
   list: |
     ubuntu:geheim
   expire: False
+
 ssh_pwauth: True
 
 write_files:
-  - path: /etc/netplan/50-cloud-init.yaml
+  - path: /etc/netplan/51-cloud-init.yaml
     permissions: '0644'
     content: |
       network:
         version: 2
         ethernets:
-          eth0:
+          ens3:
+            optional: false
+            dhcp4: false
             addresses:
               - 10.1.1.101/24
             nameservers:
@@ -147,23 +151,23 @@ write_files:
             routes:
               - to: default
                 via: 10.1.1.1
-            match:
-              macaddress: 02:01:01:03:00:03
-            set-name: eth0
+
+bootcmd:
+  - ip link set ens3 up
 
 runcmd:
   - netplan generate
   - netplan apply
-  - apt-get update
+  - apt-get update -y
   - apt-get install -y nginx
   - systemctl enable nginx
   - systemctl start nginx
 
 EOT
-  )
 }
 
 # Virtuelle Maschine 3 erstellen
+/*
 resource "cloudstack_instance" "vm3" {
   name              = "windows-vm3"
   display_name      = "Windows VM 3"
@@ -190,6 +194,7 @@ Set-Content -Path $readmeFile -Value "Hallo Welt"
 EOT
   )
 }
+*/
 
 # Ausgaben definieren
 output "vm1_id" {
@@ -200,9 +205,11 @@ output "vm2_id" {
   value = cloudstack_instance.vm2.id
 }
 
+/*
 output "vm3_id" {
   value = cloudstack_instance.vm3.id
 }
+*/
 
 output "network_id" {
   value = cloudstack_network.vlan_network.id
