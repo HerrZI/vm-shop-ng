@@ -40,6 +40,31 @@ resource "cloudstack_egress_firewall" "default" {
   }
 }
 
+resource "cloudstack_ipaddress" "public_ip" {
+  zone = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID
+}
+
+resource "cloudstack_port_forward" "nginx_http" {
+  ip_address_id = cloudstack_ipaddress.public_ip.id # Referenziert die öffentliche IP-Adresse
+  forward {
+    protocol          = "tcp"
+    private_port      = 80                      # Port der VM
+    public_port       = 80                      # Externer Port
+    virtual_machine_id = cloudstack_instance.vm2.id # Ziel-VM
+  }
+}
+
+resource "cloudstack_firewall" "allow_http" {
+  ip_address_id = cloudstack_ipaddress.public_ip.id # Öffentliche IP-Adresse
+
+  rule {
+    protocol  = "tcp"
+    cidr_list = ["0.0.0.0/0"] # Zugriff von überall erlauben
+    ports     = ["80"]        # HTTP-Port öffnen
+  }
+}
+
+
 # Virtuelle Maschine 1 erstellen
 resource "cloudstack_instance" "vm1" {
   name              = "linux-vm1"
@@ -212,5 +237,9 @@ output "vm3_id" {
 */
 
 output "network_id" {
-  value = cloudstack_network.vlan_network.id
+  value = cloudstack_network.vlan_network
+}
+output "public_ip" {
+  value       = cloudstack_ipaddress.public_ip.ip_address
+  description = "Die öffentliche IP-Adresse des Netzwerks"
 }
