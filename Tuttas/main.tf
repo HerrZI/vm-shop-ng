@@ -53,6 +53,25 @@ resource "cloudstack_port_forward" "nginx_http" {
     virtual_machine_id = cloudstack_instance.vm2.id # Ziel-VM
   }
 }
+resource "cloudstack_port_forward" "ssh" {
+  ip_address_id = cloudstack_ipaddress.public_ip.id # Referenziert die öffentliche IP-Adresse
+  forward {
+    protocol          = "tcp"
+    private_port      = 22                      # Port der VM
+    public_port       = 22                      # Externer Port
+    virtual_machine_id = cloudstack_instance.vm2.id # Ziel-VM
+  }
+
+}
+resource "cloudstack_port_forward" "rdp" {
+  ip_address_id = cloudstack_ipaddress.public_ip.id # Referenziert die öffentliche IP-Adresse
+  forward {
+    protocol          = "tcp"
+    private_port      = 3389                      # Port der VM
+    public_port       = 3389                      # Externer Port
+    virtual_machine_id = cloudstack_instance.vm3.id # Ziel-VM
+  }
+}
 
 resource "cloudstack_firewall" "allow_http" {
   ip_address_id = cloudstack_ipaddress.public_ip.id # Öffentliche IP-Adresse
@@ -60,7 +79,7 @@ resource "cloudstack_firewall" "allow_http" {
   rule {
     protocol  = "tcp"
     cidr_list = ["0.0.0.0/0"] # Zugriff von überall erlauben
-    ports     = ["80"]        # HTTP-Port öffnen
+    ports     = ["80","22","3389"]        # Port öffnen
   }
 }
 
@@ -192,34 +211,20 @@ EOT
 }
 
 # Virtuelle Maschine 3 erstellen
-/*
+
 resource "cloudstack_instance" "vm3" {
   name              = "windows-vm3"
   display_name      = "Windows VM 3"
   service_offering  = "Big Instance"
-  template          =  "0a58045f-ef36-485b-9457-0b00ffcb124c"
+  template          =  "d00cfbfc-e04e-4c42-867c-e5cbb2cf576c"
   zone              = "a4848bf1-b2d1-4b39-97e3-72106df81f09"
   network_id        = cloudstack_network.vlan_network.id
   root_disk_size    = 20
   keypair           = "tuttas"
   expunge           = true
   ip_address        = "10.1.1.102"
-  user_data = base64encode(<<EOT
-#ps1_sysnative
-# Statische IP-Adresse setzen
-New-NetIPAddress -InterfaceAlias "Ethernet-Instanz 0" -IPAddress 10.1.1.102 -PrefixLength 24 -DefaultGateway 10.1.1.1
-
-# DNS-Server konfigurieren
-Set-DnsClientServerAddress -InterfaceAlias "Ethernet-Instanz 0" -ServerAddresses 8.8.8.8, 8.8.4.4
-
-# Datei "readme.txt" im Home-Verzeichnis erstellen
-$homePath = [Environment]::GetFolderPath("UserProfile")
-$readmeFile = Join-Path $homePath "readme.txt"
-Set-Content -Path $readmeFile -Value "Hallo Welt"
-EOT
-  )
 }
-*/
+
 
 # Ausgaben definieren
 output "vm1_id" {
