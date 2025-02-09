@@ -220,13 +220,19 @@ resource "cloudstack_instance" "vm3" {
   name              = "windows-vm3"
   display_name      = "Windows VM 3"
   service_offering  = "Big Instance"
-  template          =  "d00cfbfc-e04e-4c42-867c-e5cbb2cf576c"
+  template          =  "9b00c942-7ed5-4548-98fc-182615c23d1f"
   zone              = "a4848bf1-b2d1-4b39-97e3-72106df81f09"
   network_id        = cloudstack_network.vlan_network.id
   root_disk_size    = 20
   keypair           = "tuttas"
   expunge           = true
   ip_address        = "10.1.1.102"
+# PowerShell-Skript für Cloudbase-Init mit #ps1-Header
+  user_data = <<EOT
+#ps1
+New-Item -Path 'C:\\HalloWelt.txt' -ItemType File -Force
+Set-Content -Path 'C:\\HalloWelt.txt' -Value 'Hallo Welt'
+EOT  
 }
 
 
