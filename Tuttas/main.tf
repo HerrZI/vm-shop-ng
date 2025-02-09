@@ -41,7 +41,7 @@ resource "cloudstack_egress_firewall" "default" {
 }
 
 resource "cloudstack_ipaddress" "public_ip" {
-  zone = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID
+  network_id = cloudstack_network.vlan_network.id
 }
 
 resource "cloudstack_port_forward" "nginx_http" {
@@ -73,8 +73,11 @@ resource "cloudstack_port_forward" "rdp" {
   }
 }
 
+
+# Firewall von public ip öffnen für Ports 80, 22 und 3389 für TCP
 resource "cloudstack_firewall" "allow_http" {
   ip_address_id = cloudstack_ipaddress.public_ip.id # Öffentliche IP-Adresse
+  depends_on = [ cloudstack_port_forward.nginx_http, cloudstack_port_forward.ssh, cloudstack_port_forward.rdp ]
 
   rule {
     protocol  = "tcp"
@@ -82,6 +85,7 @@ resource "cloudstack_firewall" "allow_http" {
     ports     = ["80","22","3389"]        # Port öffnen
   }
 }
+
 
 
 # Virtuelle Maschine 1 erstellen
@@ -224,6 +228,7 @@ resource "cloudstack_instance" "vm3" {
   expunge           = true
   ip_address        = "10.1.1.102"
 }
+
 
 
 # Ausgaben definieren
