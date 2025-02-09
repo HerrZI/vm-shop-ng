@@ -231,7 +231,7 @@ resource "cloudstack_instance" "vm3" {
   user_data = <<EOT
 #ps1
 New-Item -Path 'C:\\HalloWelt.txt' -ItemType File -Force
-Set-Content -Path 'C:\\HalloWelt.txt' -Value 'Hallo Welt'
+Set-Content -Path 'C:\\HalloWelt.txt' -Value 'Hallo MMBBS'
 EOT  
 }
 
