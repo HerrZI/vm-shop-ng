@@ -226,12 +226,35 @@ resource "cloudstack_instance" "vm3" {
   root_disk_size    = 20
   keypair           = "tuttas"
   expunge           = true
-  ip_address        = "10.1.1.102"
+  ip_address        = "10.1.1.103"
 # PowerShell-Skript für Cloudbase-Init mit #ps1-Header
   user_data = <<EOT
+#cloud-config  
+network:
+  version: 1
+  config:
+    - type: physical
+      name: "Ethernet"
+      subnets:
+        - type: static
+          address: 10.1.1.103
+          netmask: 255.255.255.0
+          gateway: 10.1.1.1
+          dns_nameservers:
+            - 8.8.8.8
+            - 8.8.4.4
+
 #ps1
 New-Item -Path 'C:\\HalloWelt.txt' -ItemType File -Force
-Set-Content -Path 'C:\\HalloWelt.txt' -Value 'Hallo MMBBS'
+Set-Content -Path 'C:\\HalloWelt.txt' -Value 'Hallo MMBBS4'
+
+Start-Sleep -Seconds 10
+
+# Netzwerkverbindung abrufen
+$network = Get-NetConnectionProfile
+
+# Netzwerkprofil auf "Privat" setzen
+Set-NetConnectionProfile -Name $network.Name -NetworkCategory Private
 EOT  
 }
 
