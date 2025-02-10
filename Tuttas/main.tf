@@ -207,9 +207,10 @@ runcmd:
   - netplan generate
   - netplan apply
   - apt-get update -y
-  - apt-get install -y nginx
-  - systemctl enable nginx
-  - systemctl start nginx
+  - curl -fsSL https://get.docker.com | sudo bash
+  - git clone https://gist.github.com/863959868cf293029454053053758266.git moodle
+  - cd moodle
+  - docker compose up -d
 
 EOT
 }
@@ -269,11 +270,11 @@ output "vm2_id" {
   value = cloudstack_instance.vm2.id
 }
 
-/*
+
 output "vm3_id" {
   value = cloudstack_instance.vm3.id
 }
-*/
+
 
 output "network_id" {
   value = cloudstack_network.vlan_network
