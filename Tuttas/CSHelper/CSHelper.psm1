@@ -1192,7 +1192,77 @@ function Set-CloudStackResourceLimit {
     }
 }
 
+<#
+.SYNOPSIS
+Erstellt einen API-Key und ein API-Secret für einen Benutzer in CloudStack.
+
+.DESCRIPTION
+Dieses Cmdlet generiert einen API-Schlüssel und ein API-Secret für einen angegebenen Benutzer anhand der User-ID.
+
+.PARAMETER UserID
+Die ID des Benutzers, für den der API-Schlüssel erstellt werden soll.
+
+.EXAMPLE
+New-CloudStackApiKey -UserID "b4c025cb-b64c-44fb-940f-fb6160b60a7d"
+
+Erstellt API-Schlüssel für den Benutzer mit der angegebenen User-ID.
+
+.NOTES
+- Die CloudStack-API verlangt eine User-ID, um API-Keys zu registrieren.
+- Falls der Benutzer bereits einen API-Key hat, wird dieser überschrieben.
+#>
+function New-CloudStackApiKey {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$UserID   # ID des Benutzers, für den der API-Key generiert werden soll
+    )
+
+    begin {
+        # Überprüfe, ob die Verbindung zu CloudStack besteht
+        if (-not $Global:CloudStackBaseUrl -or -not $Global:CloudStackApiKey -or -not $Global:CloudStackSecretKey) {
+            throw "Bitte zuerst Connect-CloudStack ausführen, um eine Verbindung zu CloudStack herzustellen."
+        }
+    }
+
+    process {
+        try {
+            # API-Parameter für die Erstellung des API-Keys
+            $ApiParams = @{
+                "command"  = "registerUserKeys"
+                "response" = "json"
+                "id"       = $UserID
+            }
+
+            # Signierte URL erstellen
+            $ApiUrl = Get-SignedUrl -Parameters $ApiParams
+
+            # API-Request senden
+            $ApiResponse = Invoke-RestMethod -Uri $ApiUrl -Method Get
+
+            # Überprüfung der Antwort
+            if ($ApiResponse.registeruserkeysresponse.userkeys.apikey -and $ApiResponse.registeruserkeysresponse.userkeys.secretkey) {
+                $ApiKey = $ApiResponse.registeruserkeysresponse.userkeys.apikey
+                $SecretKey = $ApiResponse.registeruserkeysresponse.userkeys.secretkey
+                Write-Host "API-Key erfolgreich erstellt für Benutzer '$UserID'" -ForegroundColor Green
+
+                # Rückgabe der API-Daten als Objekt
+                return [PSCustomObject]@{
+                    UserID    = $UserID
+                    ApiKey    = $ApiKey
+                    SecretKey = $SecretKey
+                }
+            }
+            else {
+                throw "Fehler beim Erstellen des API-Keys. API-Antwort: $($ApiResponse | ConvertTo-Json -Depth 10)"
+            }
+        }
+        catch {
+            Write-Error "Fehler beim Erstellen des API-Keys für Benutzer mit ID '$UserID': $_"
+        }
+    }
+}
 
 
 # Export Cmdlets
-Export-ModuleMember -Function Connect-CloudStack, Add-CloudStackProjectMember, Get-CloudStackProjectMember, Remove-CloudStackProjectMember, Get-CloudStackProjects, New-CloudStackProject, Remove-CloudStackProject, Test-CloudStackProject, Get-CloudStackAccounts, New-CloudStackAccount, Remove-CloudStackAccount, Get-CloudStackUsers, New-CloudStackUser, Remove-CloudStackUser, Set-CloudStackResourceLimit
+Export-ModuleMember -Function Connect-CloudStack, Add-CloudStackProjectMember, Get-CloudStackProjectMember, Remove-CloudStackProjectMember, Get-CloudStackProjects, New-CloudStackProject, Remove-CloudStackProject, Test-CloudStackProject, Get-CloudStackAccounts, New-CloudStackAccount, Remove-CloudStackAccount, Get-CloudStackUsers, New-CloudStackUser, Remove-CloudStackUser, Set-CloudStackResourceLimit, new-CloudStackApiKey
