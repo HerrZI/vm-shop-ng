@@ -46,7 +46,7 @@ resource "cloudstack_port_forward" "rdpBDC01" {
     protocol          = "tcp"
     private_port      = 3389                      # Port der VM
     public_port       = 3001                      # Externer Port
-    virtual_machine_id = cloudstack_instance.vm1.id # Ziel-VM
+    virtual_machine_id = cloudstack_instance.B-DC01.id # Ziel-VM
   }
 }
 
@@ -56,7 +56,7 @@ resource "cloudstack_port_forward" "rdpBDC02" {
     protocol          = "tcp"
     private_port      = 3389                      # Port der VM
     public_port       = 3002                      # Externer Port
-    virtual_machine_id = cloudstack_instance.vm2.id # Ziel-VM
+    virtual_machine_id = cloudstack_instance.B-DC02.id # Ziel-VM
   }
 }
 
@@ -66,7 +66,7 @@ resource "cloudstack_port_forward" "rdpRDC01" {
     protocol          = "tcp"
     private_port      = 3389                      # Port der VM
     public_port       = 3003                      # Externer Port
-    virtual_machine_id = cloudstack_instance.vm3.id # Ziel-VM
+    virtual_machine_id = cloudstack_instance.R-DC01.id # Ziel-VM
   }
 }
 
@@ -76,7 +76,7 @@ resource "cloudstack_port_forward" "rdpHBDC01" {
     protocol          = "tcp"
     private_port      = 3389                      # Port der VM
     public_port       = 3004                      # Externer Port
-    virtual_machine_id = cloudstack_instance.vm4.id # Ziel-VM
+    virtual_machine_id = cloudstack_instance.HB-DC01.id # Ziel-VM
   }
 }
 
@@ -86,7 +86,7 @@ resource "cloudstack_port_forward" "rdpBPC01" {
     protocol          = "tcp"
     private_port      = 3389                      # Port der VM
     public_port       = 3005                      # Externer Port
-    virtual_machine_id = cloudstack_instance.vm5.id # Ziel-VM
+    virtual_machine_id = cloudstack_instance.B-PC01.id # Ziel-VM
   }
 }
 
@@ -96,7 +96,7 @@ resource "cloudstack_port_forward" "rdpRPC01" {
     protocol          = "tcp"
     private_port      = 3389                      # Port der VM
     public_port       = 3006                      # Externer Port
-    virtual_machine_id = cloudstack_instance.vm6.id # Ziel-VM
+    virtual_machine_id = cloudstack_instance.R-PC01.id # Ziel-VM
   }
 }
 
@@ -106,7 +106,7 @@ resource "cloudstack_port_forward" "rdpHBPC01" {
     protocol          = "tcp"
     private_port      = 3389                      # Port der VM
     public_port       = 3007                      # Externer Port
-    virtual_machine_id = cloudstack_instance.vm7.id # Ziel-VM
+    virtual_machine_id = cloudstack_instance.HB-PC01.id # Ziel-VM
   }
 }
 
@@ -122,6 +122,104 @@ resource "cloudstack_firewall" "allow_rdp" {
   }
 }
 
+resource "cloudstack_instance" "B-PC01" {
+  name             = "B-PC01"
+  service_offering = "Big Instance"
+  template         = "3f692b17-29b5-40d1-9815-e55f33f28a02"
+  network_id       = cloudstack_network.vlan_network.id
+  zone             = "Multi Media Berufsbildende Schulen"
+  ip_address        = "10.100.1.10"
+  expunge          = true
+}
+
+resource "cloudstack_instance" "R-PC01" {
+  name             = "R-PC01"
+  service_offering = "Big Instance"
+  template         = "3f692b17-29b5-40d1-9815-e55f33f28a02"
+  network_id       = cloudstack_network.vlan_network.id
+  zone             = "Multi Media Berufsbildende Schulen"
+  ip_address        = "10.100.1.11"
+  expunge          = true
+}
+
+resource "cloudstack_instance" "HB-PC01" {
+  name             = "HB-PC01"
+  service_offering = "Big Instance"
+  template         = "3f692b17-29b5-40d1-9815-e55f33f28a02"
+  network_id       = cloudstack_network.vlan_network.id
+  zone             = "Multi Media Berufsbildende Schulen"
+  ip_address        = "10.100.1.12"
+  expunge          = true
+}
+
+resource "cloudstack_instance" "B-DC01" { 
+  name             = "B-DC01"
+  service_offering = "Big Instance"
+  template         = "2c8ac632-ff16-4edf-9e00-4a55811f2514"
+  network_id       = cloudstack_network.vlan_network.id
+  zone             = "Multi Media Berufsbildende Schulen"
+  ip_address        = "10.100.1.13"
+  expunge          = true
+}
+
+resource "cloudstack_instance" "B-DC02" { 
+  name             = "B-DC02"
+  service_offering = "Big Instance"
+  template         = "2c8ac632-ff16-4edf-9e00-4a55811f2514"
+  network_id       = cloudstack_network.vlan_network.id
+  zone             = "Multi Media Berufsbildende Schulen"
+  ip_address        = "10.100.1.14"
+  expunge          = true
+}
+
+resource "cloudstack_instance" "R-DC01" { 
+  name             = "R-DC01"
+  service_offering = "Big Instance"
+  template         = "2c8ac632-ff16-4edf-9e00-4a55811f2514"
+  network_id       = cloudstack_network.vlan_network.id
+  zone             = "Multi Media Berufsbildende Schulen"
+  ip_address        = "10.100.1.15"
+  expunge          = true
+}
+
+resource "cloudstack_instance" "HB-DC01" { 
+  name             = "HB-DC01"
+  service_offering = "Big Instance"
+  template         = "2c8ac632-ff16-4edf-9e00-4a55811f2514"
+  network_id       = cloudstack_network.vlan_network.id
+  zone             = "Multi Media Berufsbildende Schulen"
+  ip_address        = "10.100.1.16"
+  expunge          = true
+}
+
+# Ausgaben definieren
+output "B-DC01_id" {
+  value = cloudstack_instance.B-DC01.id
+}
+
+output "B-DC02_id" {
+  value = cloudstack_instance.B-DC02.id
+}
+
+output "R-DC01_id" {
+  value = cloudstack_instance.R-DC01.id
+}
+
+output "HB-DC01_id" {
+  value = cloudstack_instance.HB-DC01.id
+}
+
+output "B-PC01_id" {
+  value = cloudstack_instance.B-PC01.id
+}
+
+output "R-PC01_id" {
+  value = cloudstack_instance.R-PC01.id
+}
+
+output "HB-PC01_id" {
+  value = cloudstack_instance.HB-PC01.id
+}
 
 output "network_id" {
   value = cloudstack_network.vlan_network.id
