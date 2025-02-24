@@ -1,3 +1,9 @@
+LF10b_old/.terraform.lock.hcl
+LF10b_old/.terraform/*.*
+LF10b_old/terraform.tfvars
+LF10b_old/config.psd1
+LF10b_old/logfile.txt
+
 LF10b/.terraform.lock.hcl
 LF10b/.terraform/*.*
 LF10b/terraform.tfvars
