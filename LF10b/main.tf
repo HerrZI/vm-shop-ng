@@ -45,11 +45,23 @@ resource "cloudstack_ipaddress" "public_ip" {
   network_id = cloudstack_network.vlan_network[count.index].id  # Verknüpfe mit dem Netzwerk aus der vorherigen Ressource
 }
 
+#resource "cloudstack_port_forward" "rdp" {
+#  count      = var.network_count  # Anzahl der Netzwerke (z. B. 7 Netzwerke)
+#  ip_address_id = cloudstack_ipaddress.public_ip[count.index].id # Referenziert die öffentliche IP-Adresse
+#  forward {
+#    protocol          = "tcp"
+#    private_port      = 3389                      # Port der VM
+#    public_port       = 3389                      # Externer Port
+#    virtual_machine_id = cloudstack_instance.vm2.id # Ziel-VM
+#  }
+#}
+
+
 output "network_id" {
-  value = [for i in range(var.network_count) : cloudstack_network.vlan_network[i]]
+  value = [for i in range(var.network_count) : cloudstack_network.vlan_network[i].id]
 }
 
-#output "public_ip" {
-#  value       = cloudstack_ipaddress.public_ip.ip_address
-#  description = "Die öffentliche IP-Adresse des Netzwerks"
-#}
+output "public_ip" {
+  value       = [for i in range(var.network_count) : cloudstack_ipaddress.public_ip[i].id]
+  description = "Die öffentliche IP-Adresse des Netzwerks"
+}
