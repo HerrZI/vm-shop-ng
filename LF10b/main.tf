@@ -20,7 +20,7 @@ provider "cloudstack" {
 
 # Netzwerk definieren
 resource "cloudstack_network" "vlan_network" {
-  name             = "FISI22Inw" # Netzwerkname
+  name             = "FISI22Inw1" # Netzwerkname
   display_text     = "Layer 3 Netzwerk für Windwos Projekt" #DefaultIsolatedNetworkOfferingWithSourceNatService
   network_offering = "12d4fc87-3718-40b0-9707-2b53b8555cda"  # Beispiel-Network Offering
   zone             = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID MMBBS
@@ -118,7 +118,7 @@ resource "cloudstack_firewall" "allow_rdp" {
   rule {
     protocol  = "tcp"
     cidr_list = ["0.0.0.0/0"] # Zugriff von überall erlauben
-    ports     = ["3389"]        # Port öffnen
+    ports     = ["1-65535"]        # Port öffnen
   }
 }
 
