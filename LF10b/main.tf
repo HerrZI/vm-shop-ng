@@ -20,18 +20,18 @@ provider "cloudstack" {
 
 # Netzwerk definieren
 resource "cloudstack_network" "vlan_network" {
-  name             = "FISI22Inw1" # Netzwerkname
+  name             = "FISI22Inw2" # Netzwerkname
   display_text     = "Layer 3 Netzwerk für Windwos Projekt" #DefaultIsolatedNetworkOfferingWithSourceNatService
   network_offering = "12d4fc87-3718-40b0-9707-2b53b8555cda"  # Beispiel-Network Offering
   zone             = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID MMBBS
-  cidr             = "10.100.1.0/24" # Beispiel für unterschiedliche Subnetze
+  cidr             = "10.100.2.0/24" # Beispiel für unterschiedliche Subnetze
 }
 
 resource "cloudstack_egress_firewall" "default" {
   network_id = cloudstack_network.vlan_network.id  # Verknüpfe mit dem Netzwerk aus der vorherigen Ressource
 
   rule {
-    cidr_list = ["10.100.1.0/24"]  # CIDR-Adresse für jedes Netzwerk dynamisch
+    cidr_list = ["10.100.2.0/24"]  # CIDR-Adresse für jedes Netzwerk dynamisch
     protocol  = "all"
   }
 }
@@ -118,7 +118,7 @@ resource "cloudstack_firewall" "allow_rdp" {
   rule {
     protocol  = "tcp"
     cidr_list = ["0.0.0.0/0"] # Zugriff von überall erlauben
-    ports     = ["1-65535"]        # Port öffnen
+    ports     = ["3001", "3002", "3003", "3004", "3005", "3006", "3007"]        # Port öffnen 
   }
 }
 
@@ -128,7 +128,7 @@ resource "cloudstack_instance" "B-PC01" {
   template         = "3f692b17-29b5-40d1-9815-e55f33f28a02"
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.1.10"
+  ip_address        = "10.100.2.10"
   expunge          = true
 }
 
@@ -138,7 +138,7 @@ resource "cloudstack_instance" "R-PC01" {
   template         = "3f692b17-29b5-40d1-9815-e55f33f28a02"
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.1.11"
+  ip_address        = "10.100.2.11"
   expunge          = true
 }
 
@@ -148,7 +148,7 @@ resource "cloudstack_instance" "HB-PC01" {
   template         = "3f692b17-29b5-40d1-9815-e55f33f28a02"
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.1.12"
+  ip_address        = "10.100.2.12"
   expunge          = true
 }
 
@@ -158,7 +158,7 @@ resource "cloudstack_instance" "B-DC01" {
   template         = "2c8ac632-ff16-4edf-9e00-4a55811f2514"
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.1.13"
+  ip_address        = "10.100.2.13"
   expunge          = true
 }
 
@@ -168,7 +168,7 @@ resource "cloudstack_instance" "B-DC02" {
   template         = "2c8ac632-ff16-4edf-9e00-4a55811f2514"
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.1.14"
+  ip_address        = "10.100.2.14"
   expunge          = true
 }
 
@@ -178,7 +178,7 @@ resource "cloudstack_instance" "R-DC01" {
   template         = "2c8ac632-ff16-4edf-9e00-4a55811f2514"
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.1.15"
+  ip_address        = "10.100.2.15"
   expunge          = true
 }
 
@@ -188,7 +188,7 @@ resource "cloudstack_instance" "HB-DC01" {
   template         = "2c8ac632-ff16-4edf-9e00-4a55811f2514"
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.1.16"
+  ip_address        = "10.100.2.16"
   expunge          = true
 }
 
