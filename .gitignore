@@ -20,3 +20,8 @@ Tuttas/Wahl.xlsx
 Tuttas/secret.json
 Tuttas/CourseManagment/.terraform.lock.hcl
 Tuttas/CourseManagment/.terraform/*
+
+vm-shop-ng-working-Test/vm-shop-ng/vm-shop-ng-working-Test/vm-shop-ng/.terraform.lock.hcl
+vm-shop-ng-working-Test/vm-shop-ng/vm-shop-ng-working-Test/vm-shop-ng/.terraform/*
+vm-shop-ng-working-Test/vm-shop-ng/vm-shop-ng-working-Test/vm-shop-ng/secret.json
+vm-shop-ng-working-Test/vm-shop-ng/LF10b/terraform.tfvars
