@@ -86,16 +86,9 @@ resource "cloudstack_instance" "Debian" {
 datasource:
   None
 
-#users:
-#  - name: user1
-#    groups: sudo
-#    shell: /bin/bash
-#    sudo: ['ALL=(ALL) NOPASSWD:ALL']
-
 chpasswd:
   list: |
     mmbbs:mmbbs
-#    user1:user1
   expire: False
 ssh_pwauth: True
 
@@ -118,17 +111,9 @@ resource "cloudstack_instance" "Devuan" {
 datasource:
   None
 
-#users:
-#  - name: user1
-#    groups: sudo
-#    shell: /bin/bash
-#    sudo: ['ALL=(ALL) NOPASSWD:ALL']
-#    passwd: user1
-
 chpasswd:
   list: |
     mmbbs:mmbbs
-#    user1:user1
   expire: False
 ssh_pwauth: True
 
