@@ -78,8 +78,9 @@ resource "cloudstack_instance" "Debian" {
   template         = "8c53c613-4c6e-41d1-be6d-3b4f50a4921c" #Debian13-mit-CloudInit
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.2.10"
+  ip_address       = "10.100.2.10"
   expunge          = true
+  #start_vm         = false
   # Cloud-Init für Passwort, Gateway und DNS
   user_data = <<EOT
 #cloud-config
@@ -93,7 +94,7 @@ chpasswd:
 ssh_pwauth: True
 
 runcmd:
-  - hostname debian-test
+  - hostname debian
 EOT
 }
 
@@ -103,8 +104,9 @@ resource "cloudstack_instance" "Devuan" {
   template         = "5c491654-06cf-4f9c-90e0-a676df68856c" #Devuan-mit-Cloud-init
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.2.11"
+  ip_address       = "10.100.2.11"
   expunge          = true
+  #start_vm         = false
   # Cloud-Init für Passwort, Gateway und DNS
   user_data = <<EOT
 #cloud-config
@@ -118,7 +120,7 @@ chpasswd:
 ssh_pwauth: True
 
 runcmd:
-  - hostname devuan-test
+  - hostname devuan
 EOT
 }
 
