@@ -50,15 +50,25 @@ resource "cloudstack_port_forward" "Debian13Instance" {
   }
 }
 
-# Firewall von public ip öffnen für Ports 22 für TCP
+resource "cloudstack_port_forward" "DevuanInstance" {
+  ip_address_id = cloudstack_ipaddress.public_ip.id # Referenziert die öffentliche IP-Adresse
+  forward {
+    protocol          = "tcp"
+    private_port      = 22                      # Port der VM
+    public_port       = 23                      # Externer Port
+    virtual_machine_id = cloudstack_instance.Devuan.id # Ziel-VM
+  }
+}
+
+# Firewall von public ip öffnen für Ports 22 und 23 für TCP
 resource "cloudstack_firewall" "allow_rdp" {
   ip_address_id = cloudstack_ipaddress.public_ip.id # Öffentliche IP-Adresse
-  depends_on = [ cloudstack_port_forward.Debian13Instance ]
+  depends_on = [ cloudstack_port_forward.Debian13Instance, cloudstack_port_forward.DevuanInstance ]
 
   rule {
     protocol  = "tcp"
     cidr_list = ["0.0.0.0/0"] # Zugriff von überall erlauben
-    ports     = ["22"]        # Port öffnen
+    ports     = ["22", "23"]        # Port öffnen
   }
 }
 
@@ -76,28 +86,64 @@ resource "cloudstack_instance" "Debian" {
 datasource:
   None
 
-password: geheim
+#users:
+#  - name: user1
+#    groups: sudo
+#    shell: /bin/bash
+#    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+
 chpasswd:
   list: |
-    mmbbs:geheim
+    mmbbs:mmbbs
+#    user1:user1
   expire: False
 ssh_pwauth: True
 
-write_files:
-  - path: /tmp/test-file.txt
-    permissions: '0644'
-    content: |
-      Hello, this is a test file.
+runcmd:
+  - hostname debian-test
+EOT
+}
+
+resource "cloudstack_instance" "Devuan" {
+  name             = "Devuan"
+  service_offering = "Medium Instance"
+  template         = "5c491654-06cf-4f9c-90e0-a676df68856c" #Devuan-mit-Cloud-init
+  network_id       = cloudstack_network.vlan_network.id
+  zone             = "Multi Media Berufsbildende Schulen"
+  ip_address        = "10.100.2.11"
+  expunge          = true
+  # Cloud-Init für Passwort, Gateway und DNS
+  user_data = <<EOT
+#cloud-config
+datasource:
+  None
+
+#users:
+#  - name: user1
+#    groups: sudo
+#    shell: /bin/bash
+#    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+#    passwd: user1
+
+chpasswd:
+  list: |
+    mmbbs:mmbbs
+#    user1:user1
+  expire: False
+ssh_pwauth: True
 
 runcmd:
-  - apt-get update -y
+  - hostname devuan-test
 EOT
-
 }
 
 # Ausgaben definieren
 output "Debian_id" {
   value = cloudstack_instance.Debian.id
+}
+
+output "Devuan_id" {
+  value = cloudstack_instance.Devuan.id
 }
 
 output "network_id" {
