@@ -20,7 +20,7 @@ provider "cloudstack" {
 
 # Netzwerk definieren
 resource "cloudstack_network" "vlan_network" {
-  name             = "FISI22Inw2" # Netzwerkname
+  name             = "FISI-NW" # Netzwerkname
   display_text     = "Layer 3 Netzwerk für Windwos Projekt" 
   network_offering = "4e9bfcb1-d441-4316-b86f-fb6696fde80b"  #DefaultIsolatedNetworkOfferingWithSourceNatService
   zone             = "c94601a1-fbaf-4067-bc78-d1b9cacfbcbe"  #Multi Media Berufsbildende Schulen
