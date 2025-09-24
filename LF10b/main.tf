@@ -23,7 +23,7 @@ resource "cloudstack_network" "vlan_network" {
   name             = "FISI22Inw2" # Netzwerkname
   display_text     = "Layer 3 Netzwerk für Windwos Projekt" 
   network_offering = "4e9bfcb1-d441-4316-b86f-fb6696fde80b"  #DefaultIsolatedNetworkOfferingWithSourceNatService
-  zone             = "Multi Media Berufsbildende Schulen"
+  zone             = "c94601a1-fbaf-4067-bc78-d1b9cacfbcbe"  #Multi Media Berufsbildende Schulen
   cidr             = "10.100.1.0/24" # Beispiel für unterschiedliche Subnetze
 }
 
@@ -124,7 +124,7 @@ resource "cloudstack_firewall" "allow_rdp" {
 
 resource "cloudstack_instance" "B-PC01" {
   name             = "B-PC01"
-  service_offering = "Big Instance"
+  service_offering = "Windows Server 2022 (LF10b)"
   template         = "26e42b2f-3c6f-43dd-bf6b-2e83765b9872" # Windows-11-Template (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
@@ -134,7 +134,7 @@ resource "cloudstack_instance" "B-PC01" {
 
 resource "cloudstack_instance" "R-PC01" {
   name             = "R-PC01"
-  service_offering = "Big Instance"
+  service_offering = "Windows Server 2022 (LF10b)"
   template         = "26e42b2f-3c6f-43dd-bf6b-2e83765b9872" # Windows-11-Template (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
@@ -144,7 +144,7 @@ resource "cloudstack_instance" "R-PC01" {
 
 resource "cloudstack_instance" "HB-PC01" {
   name             = "HB-PC01"
-  service_offering = "Big Instance"
+  service_offering = "Windows Server 2022 (LF10b)"
   template         = "26e42b2f-3c6f-43dd-bf6b-2e83765b9872" # Windows-11-Template (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
@@ -154,7 +154,7 @@ resource "cloudstack_instance" "HB-PC01" {
 
 resource "cloudstack_instance" "B-DC01" { 
   name             = "B-DC01"
-  service_offering = "Big Instance"
+  service_offering = "Windows Server 2022 (LF10b)"
   template         = "bcea4c53-ac5c-4fe6-83ea-54065801ba63" # Windows-Server-2022-Template (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
@@ -164,7 +164,7 @@ resource "cloudstack_instance" "B-DC01" {
 
 resource "cloudstack_instance" "B-DC02" { 
   name             = "B-DC02"
-  service_offering = "Big Instance"
+  service_offering = "Windows Server 2022 (LF10b)"
   template         = "bcea4c53-ac5c-4fe6-83ea-54065801ba63" # Windows-Server-2022-Template (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
@@ -174,7 +174,7 @@ resource "cloudstack_instance" "B-DC02" {
 
 resource "cloudstack_instance" "R-DC01" { 
   name             = "R-DC01"
-  service_offering = "Big Instance"
+  service_offering = "Windows Server 2022 (LF10b)"
   template         = "bcea4c53-ac5c-4fe6-83ea-54065801ba63" # Windows-Server-2022-Template (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
@@ -184,7 +184,7 @@ resource "cloudstack_instance" "R-DC01" {
 
 resource "cloudstack_instance" "HB-DC01" { 
   name             = "HB-DC01"
-  service_offering = "Big Instance"
+  service_offering = "Windows Server 2022 (LF10b)"
   template         = "bcea4c53-ac5c-4fe6-83ea-54065801ba63" # Windows-Server-2022-Template (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
