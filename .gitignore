@@ -21,12 +21,7 @@ Tuttas/secret.json
 Tuttas/CourseManagment/.terraform.lock.hcl
 Tuttas/CourseManagment/.terraform/*
 
-vm-shop-ng-test-maerz25/.terraform/*.*
-vm-shop-ng-test-maerz25/.terraform.lock.hcl
-vm-shop-ng-test-maerz25/secret.json
-vm-shop-ng-test-maerz25/terraform.tfvars
-
-LinuxKurs/.terraform/*.*
-LinuxKurs/.terraform.lock.hcl
-LinuxKurs/secret.json
-LinuxKurs/terraform.tfvars
+**/.terraform/*.*
+**/.terraform.lock.hcl
+**/secret.json
+**/terraform.tfvars
