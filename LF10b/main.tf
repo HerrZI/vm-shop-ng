@@ -125,7 +125,7 @@ resource "cloudstack_firewall" "allow_rdp" {
 resource "cloudstack_instance" "B-PC01" {
   name             = "B-PC01"
   service_offering = "Windows Server 2022 (LF10b)"
-  template         = "6795d33d-a99c-4c7d-8580-2098c48341b3" # Windows-11-Template V2 (LF10b)
+  template         = "4ba4c075-851f-44be-97a7-a64b457354c2" # Windows-11-Template V3 (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
   ip_address        = "10.100.1.10"
@@ -135,7 +135,7 @@ resource "cloudstack_instance" "B-PC01" {
 resource "cloudstack_instance" "R-PC01" {
   name             = "R-PC01"
   service_offering = "Windows Server 2022 (LF10b)"
-  template         = "6795d33d-a99c-4c7d-8580-2098c48341b3" # Windows-11-Template V2 (LF10b)
+  template         = "4ba4c075-851f-44be-97a7-a64b457354c2" # Windows-11-Template V3 (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
   ip_address        = "10.100.1.11"
@@ -145,7 +145,7 @@ resource "cloudstack_instance" "R-PC01" {
 resource "cloudstack_instance" "HB-PC01" {
   name             = "HB-PC01"
   service_offering = "Windows Server 2022 (LF10b)"
-  template         = "6795d33d-a99c-4c7d-8580-2098c48341b3" # Windows-11-Template V2 (LF10b)
+  template         = "4ba4c075-851f-44be-97a7-a64b457354c2" # Windows-11-Template V3 (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
   ip_address        = "10.100.1.12"
