@@ -12,6 +12,21 @@ terraform {
   }
 }
 
+
+#terraform {
+#  required_providers {
+#    cloudstack = {
+#      source = "lucasdk3/cloudstack"
+#      version = "0.5.0"
+#    }
+#  }
+#}
+
+
+
+
+
+
 provider "cloudstack" {
   api_url    = var.api_url
   api_key    = var.api_key
@@ -32,7 +47,8 @@ resource "cloudstack_egress_firewall" "default" {
 
   rule {
     cidr_list = ["10.100.1.0/24"]  # CIDR-Adresse für jedes Netzwerk dynamisch
-    protocol  = "all"
+    protocol  = "tcp"
+    ports     = ["3389"]          # VMs dürfen nur über diesen Port nach außen kommunizieren
   }
 }
 
@@ -125,30 +141,34 @@ resource "cloudstack_firewall" "allow_rdp" {
 resource "cloudstack_instance" "B-PC01" {
   name             = "B-PC01"
   service_offering = "Windows Server 2022 (LF10b)"
-  template         = "759e2bca-15b4-4d1f-8a4d-d949442a270f" # Win 11 Zero new (LF10b)
+  template         = "177253a0-a6b6-4746-8557-9b2be49f0d4c" # Windows-10-Template (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.1.10"
+  ip_address       = "10.100.1.10"
+  #root_disk_size   = 30
   expunge          = true
 }
 
 resource "cloudstack_instance" "R-PC01" {
   name             = "R-PC01"
   service_offering = "Windows Server 2022 (LF10b)"
-  template         = "759e2bca-15b4-4d1f-8a4d-d949442a270f" # Win 11 Zero new (LF10b)
+  template         = "177253a0-a6b6-4746-8557-9b2be49f0d4c" # Windows-10-Template (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.1.11"
+  ip_address       = "10.100.1.11"
+  #root_disk_size   = 30
   expunge          = true
+
 }
 
 resource "cloudstack_instance" "HB-PC01" {
   name             = "HB-PC01"
   service_offering = "Windows Server 2022 (LF10b)"
-  template         = "759e2bca-15b4-4d1f-8a4d-d949442a270f" # Win 11 Zero new (LF10b)
+  template         = "177253a0-a6b6-4746-8557-9b2be49f0d4c" # Windows-10-Template (LF10b)
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
-  ip_address        = "10.100.1.12"
+  ip_address       = "10.100.1.12"
+  #root_disk_size   = 30
   expunge          = true
 }
 
