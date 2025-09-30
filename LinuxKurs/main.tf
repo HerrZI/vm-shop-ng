@@ -22,8 +22,8 @@ provider "cloudstack" {
 resource "cloudstack_network" "vlan_network" {
   name             = "LinuxKursNW" # Netzwerkname
   display_text     = "Layer 3 Netzwerk für Windwos Projekt" #DefaultIsolatedNetworkOfferingWithSourceNatService
-  network_offering = "12d4fc87-3718-40b0-9707-2b53b8555cda"  # Beispiel-Network Offering
-  zone             = "a4848bf1-b2d1-4b39-97e3-72106df81f09" # Zone-ID MMBBS
+  network_offering = "4e9bfcb1-d441-4316-b86f-fb6696fde80b"  #DefaultIsolatedNetworkOfferingWithSourceNatService
+  zone             = "c94601a1-fbaf-4067-bc78-d1b9cacfbcbe"  #Multi Media Berufsbildende Schulen
   cidr             = "10.100.2.0/24" # Beispiel für unterschiedliche Subnetze
 }
 
@@ -61,21 +61,21 @@ resource "cloudstack_port_forward" "DevuanInstance" {
 }
 
 # Firewall von public ip öffnen für Ports 22 und 23 für TCP
-resource "cloudstack_firewall" "allow_rdp" {
+resource "cloudstack_firewall" "allow_ssh" {
   ip_address_id = cloudstack_ipaddress.public_ip.id # Öffentliche IP-Adresse
   depends_on = [ cloudstack_port_forward.Debian13Instance, cloudstack_port_forward.DevuanInstance ]
 
   rule {
     protocol  = "tcp"
     cidr_list = ["0.0.0.0/0"] # Zugriff von überall erlauben
-    ports     = ["22", "23"]        # Port öffnen
+    ports     = ["22","23"]        # Port öffnen
   }
 }
 
 resource "cloudstack_instance" "Debian" {
   name             = "Debian"
   service_offering = "Big Instance"
-  template         = "8c53c613-4c6e-41d1-be6d-3b4f50a4921c" #Debian13-mit-CloudInit
+  template         = "0d24c1fd-a478-449f-a606-b361b2f78b85" #Debian13-mit-CloudInit
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
   ip_address       = "10.100.2.10"
@@ -101,7 +101,7 @@ EOT
 resource "cloudstack_instance" "Devuan" {
   name             = "Devuan"
   service_offering = "Medium Instance"
-  template         = "5c491654-06cf-4f9c-90e0-a676df68856c" #Devuan-mit-Cloud-init
+  template         = "4713138b-b7ae-4ed9-9454-42f79f11cd01" #Devuan-mit-Cloud-init
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
   ip_address       = "10.100.2.11"
