@@ -75,7 +75,7 @@ resource "cloudstack_firewall" "allow_ssh" {
 resource "cloudstack_instance" "Debian" {
   name             = "Debian"
   service_offering = "Big Instance"
-  template         = "0d24c1fd-a478-449f-a606-b361b2f78b85" #Debian13-mit-CloudInit
+  template         = "a42be8f9-674c-4468-872b-64f89b8f9721" #Debian13-mit-SSH
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
   ip_address       = "10.100.2.10"
@@ -101,7 +101,7 @@ EOT
 resource "cloudstack_instance" "Devuan" {
   name             = "Devuan"
   service_offering = "Medium Instance"
-  template         = "4713138b-b7ae-4ed9-9454-42f79f11cd01" #Devuan-mit-Cloud-init
+  template         = "7c686e52-c42b-43a6-99c0-065131fcdc4a" #Devuan-mit-SSH
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
   ip_address       = "10.100.2.11"
