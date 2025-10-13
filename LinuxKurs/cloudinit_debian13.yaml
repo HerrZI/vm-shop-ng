@@ -1,0 +1,58 @@
+#cloud-config
+## Debian cloud-init: hostname, machine-id, user password, full update/upgrade, ssh key regeneration, reboot.
+
+# ----------------------------------------
+# Hostname und /etc/hosts-Eintrag
+# ----------------------------------------
+hostname: debian13
+preserve_hostname: false
+manage_etc_hosts: true
+
+# ----------------------------------------
+# Paketaktualisierung
+# ----------------------------------------
+package_update: false     # führt apt-get update beim ersten Boot aus
+package_upgrade: false    # führt apt-get upgrade beim ersten Boot aus
+
+# ----------------------------------------
+# Benutzer-Passwort
+# (⚠️ Klartext nur für Tests verwenden!)
+# ----------------------------------------
+chpasswd:
+  list: |
+    mmbbs:test
+  expire: false
+
+# Optional: SSH-Passwortlogin aktivieren
+ssh_pwauth: true
+
+# ----------------------------------------
+# Machine-ID & D-Bus-ID erneuern
+# ----------------------------------------
+bootcmd:
+  # alte IDs löschen
+  - [ rm, -f, /etc/machine-id ]
+  - [ rm, -f, /var/lib/dbus/machine-id ]
+
+runcmd:
+  # neue IDs erzeugen
+  - [ dbus-uuidgen, --ensure=/etc/machine-id ]
+  - [ dbus-uuidgen, --ensure ]
+  # Log-Eintrag zur Kontrolle
+  - [ /bin/sh, -lc, 'echo "cloud-init done: hostname=$(hostname), machine-id=$(cat /etc/machine-id)" > /var/log/cloud-init-custom.log' ]
+  # Neustart durchführen
+  - [ /bin/sh, -lc, 'echo "Rebooting after initial cloud-init setup..." && sleep 5 && reboot' ]
+
+# ----------------------------------------
+# SSH-Hostkeys neu generieren (automatisch, non-blocking)
+# ----------------------------------------
+ssh_deletekeys: true
+ssh_genkeytypes:
+  - rsa
+  - ecdsa
+  - ed25519
+
+# ----------------------------------------
+# Abschlussmeldung
+# ----------------------------------------
+final_message: "Cloud-init configuration finished successfully on debian13 (system will reboot)."

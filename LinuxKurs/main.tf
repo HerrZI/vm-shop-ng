@@ -75,27 +75,15 @@ resource "cloudstack_firewall" "allow_ssh" {
 resource "cloudstack_instance" "Debian" {
   name             = "Debian"
   service_offering = "Big Instance"
-  template         = "a42be8f9-674c-4468-872b-64f89b8f9721" #Debian13-mit-SSH
+#  template         = "a42be8f9-674c-4468-872b-64f89b8f9721" #Debian13-mit-SSH
+  template         = "ce1ebbec-4310-4f1f-8083-32e60cf62904" #Debian13TemplateCloudinit
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
   ip_address       = "10.100.2.10"
   expunge          = true
   #start_vm         = false
-  # Cloud-Init für Passwort, Gateway und DNS
-  user_data = <<EOT
-#cloud-config
-datasource:
-  None
-
-chpasswd:
-  list: |
-    mmbbs:mmbbs
-  expire: False
-ssh_pwauth: True
-
-runcmd:
-  - hostname debian
-EOT
+  # Cloud-Init für initiale Konfiguration
+  user_data = file("${path.module}/cloudinit_debian13.yaml")
 }
 
 resource "cloudstack_instance" "Devuan" {
