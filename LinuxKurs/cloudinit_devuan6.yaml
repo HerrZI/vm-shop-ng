@@ -1,8 +1,8 @@
 #cloud-config
-## Debian 13: hostname, machine-id, user password, ssh host keys, reboot
-## + Netzwerkwarten (korrekte YAML-Syntax)
+## Devuan 6 (sysvinit): hostname, machine-id, user password, ssh host keys, reboot
+## + Netzwerk NICHT von cloud-init managen, aber auf Konnektivität warten
 
-hostname: debian13
+hostname: devuan6
 preserve_hostname: false
 manage_etc_hosts: true
 
@@ -11,7 +11,7 @@ package_upgrade: false
 
 chpasswd:
   list: |
-    mmbbs:mmbbs
+    mmbbs:12345
   expire: false
 
 ssh_pwauth: true
@@ -26,25 +26,26 @@ network:
     interval: 5
 
 bootcmd:
-  # alte IDs löschen
+  # Alte IDs löschen (Devuan ohne systemd: /etc/machine-id existiert evtl. nicht, trotzdem sicher löschen)
   - [ rm, -f, /etc/machine-id ]
   - [ rm, -f, /var/lib/dbus/machine-id ]
 
-  # (Optionaler Fallback) Zusätzlich kurze Schleife, falls wait-on-network zu früh „grün“ meldet:
+  # (Optionaler Fallback) kurze Schleife, falls wait-on-network zu früh „grün“ meldet:
   - [ /bin/sh, -lc, 'for i in $(seq 1 20); do ip -4 route get 1.1.1.1 >/dev/null 2>&1 && break; sleep 2; done' ]
 
 runcmd:
-  # neue IDs erzeugen
-  - [ dbus-uuidgen, --ensure=/etc/machine-id ]
+  # Neue IDs erzeugen (DBus-UUID anlegen) …
   - [ dbus-uuidgen, --ensure ]
+  # … und sicherstellen, dass /etc/machine-id vorhanden oder verlinkt ist
+  - [ /bin/sh, -lc, '[ -s /etc/machine-id ] || ln -sf /var/lib/dbus/machine-id /etc/machine-id' ]
 
   # Log-Eintrag zur Kontrolle
   - [ /bin/sh, -lc, 'echo "cloud-init done: hostname=$(hostname), machine-id=$(cat /etc/machine-id 2>/dev/null || echo none)" > /var/log/cloud-init-custom.log' ]
 
-  # Neustart durchführen
+  # Neustart durchführen (SysV: reboot/shutdown funktionieren gleichermaßen)
   - [ /bin/sh, -lc, 'echo "Rebooting after initial cloud-init setup..." && sleep 5 && reboot' ]
 
 ssh_deletekeys: true
 ssh_genkeytypes: [ rsa, ecdsa, ed25519 ]
 
-final_message: "Cloud-init configuration finished successfully on debian13 (system will reboot)."
+final_message: "Cloud-init configuration finished successfully on devuan6 (system will reboot)."

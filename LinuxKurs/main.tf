@@ -89,27 +89,14 @@ resource "cloudstack_instance" "Debian" {
 resource "cloudstack_instance" "Devuan" {
   name             = "Devuan"
   service_offering = "Medium Instance"
-  template         = "7c686e52-c42b-43a6-99c0-065131fcdc4a" #Devuan-mit-SSH
+  template         = "d43960bd-5140-4a01-9340-c22eae9c1a06" #Devuan6TemplateCloudinit
   network_id       = cloudstack_network.vlan_network.id
   zone             = "Multi Media Berufsbildende Schulen"
   ip_address       = "10.100.2.11"
   expunge          = true
   #start_vm         = false
   # Cloud-Init für Passwort, Gateway und DNS
-  user_data = <<EOT
-#cloud-config
-datasource:
-  None
-
-chpasswd:
-  list: |
-    mmbbs:mmbbs
-  expire: False
-ssh_pwauth: True
-
-runcmd:
-  - hostname devuan
-EOT
+  user_data = file("${path.module}/cloudinit_devuan6.yaml")
 }
 
 # Ausgaben definieren
